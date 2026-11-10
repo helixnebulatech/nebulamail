@@ -1,0 +1,18 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<html><body background="https://cdn.example/body-bg.png">
+<p>Image attributes</p>
+<img src="https://cdn.example/hero.png" width="600" height="200" alt="hero">
+<img srcset="https://cdn.example/a-1x.png 1x, https://cdn.example/a-2x.png 2x, /relative-3x.png 3x" width="300" height="100" alt="srcset only">
+<img src="https://cdn.example/b.png" srcset="https://cdn.example/b-480.png 480w,https://cdn.example/b-800.png 800w" sizes="(max-width: 600px) 480px, 800px" width="400" height="300">
+<picture><source srcset="https://cdn.example/pic.avif" type="image/avif"><source media="(min-width: 800px)" srcset="https://cdn.example/pic-wide.png"><img src="https://cdn.example/pic.png" width="200" height="200"></picture>
+<table background="https://cdn.example/table-bg.png" width="600"><tr><td background="https://cdn.example/td-bg.png" width="300" height="100">cell</td><th background="//cdn.example/th-bg.png">head</th></tr></table>
+<video poster="https://attacker.example/poster.png" src="https://attacker.example/v.mp4"><track src="https://attacker.example/t.vtt"></video>
+<audio src="https://attacker.example/a.mp3"></audio>
+<img lowsrc="https://attacker.example/lowsrc.png" dynsrc="https://attacker.example/dynsrc.avi" longdesc="https://attacker.example/longdesc" width="10" height="10">
+<img data-src="https://attacker.example/data-src.png" width="80" height="80">
+<bgsound src="https://attacker.example/bgsound.wav">
+<img src="https://cdn.example/lazy.png" loading="lazy" referrerpolicy="unsafe-url" crossorigin="use-credentials" fetchpriority="high" width="64" height="64">
+<img src="https://user:pass@cdn.example/creds.png" width="64" height="64">
+<img src="http://cdn.example/insecure.png" width="64" height="64">
+</body></html>

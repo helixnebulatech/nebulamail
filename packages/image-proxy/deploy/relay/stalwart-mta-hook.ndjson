@@ -1,0 +1,1 @@
+{"@type": "create", "object": "MtaHook", "value": {"relay": {"url": "http://127.0.0.1:3004/hooks/stalwart", "stages": {"data": true}, "enable": {"else": "is_empty(authenticated_as)"}, "httpAuth": {"@type": "Bearer", "bearerToken": {"@type": "EnvironmentVariable", "variableName": "IMAGE_PRELOAD_RELAY_SECRET"}}, "tempFailOnError": false, "timeout": 10000, "httpHeaders": {}}}}

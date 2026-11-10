@@ -1,0 +1,17 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<html><body>
+<p>Mutation XSS</p>
+<math><mtext><table><mglyph><style><img src=x onerror="alert(1)"></style></mglyph></table></mtext></math>
+<noscript><p title="</noscript><img src=x onerror=alert(1)>"></p></noscript>
+<svg></p><style><a id="</style><img src=1 onerror=alert(1)>"></a></style></svg>
+<form><math><mtext></form><form><mglyph><style></math><img src onerror=alert(1)>
+<template><style></template><img src=x onerror=alert(1)></style></template>
+<!--<img src="--><img src=x onerror=alert(1)//">
+<style>\3c /style\3e <img src=https://attacker.example/breakout.png onerror=alert(1)></style>
+<style>a{content:"\3c /style\3e \3c img src=x onerror=alert(1)\3e "}</style>
+<xmp><img src=x onerror=alert(1)></xmp>
+<textarea><img src=x onerror=alert(1)></textarea>
+<title><img src=x onerror=alert(1)></title>
+<p>end</p>
+</body></html>

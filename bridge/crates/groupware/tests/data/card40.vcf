@@ -1,0 +1,13 @@
+BEGIN:VCARD
+VERSION:4.0
+UID:urn:uuid:4fbe8971-0bc3-424c-9c26-36c3e1eff6b1
+KIND:individual
+FN:Pedro Ruiz
+N:Ruiz;Pedro;;;
+EMAIL;TYPE=work;PREF=1:pedro@example.com
+TEL;VALUE=uri;TYPE=voice,cell:tel:+34-600-111-222
+ANNIVERSARY:20150612
+LANG;PREF=1:es
+IMPP:xmpp:pedro@example.com
+X-NEBULA-TEST:desconocido
+END:VCARD

@@ -1,0 +1,25 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<html><body>
+<p>Links</p>
+<a href="javascript:alert(1)">l1</a>
+<a href="jAvAsCrIpT:alert(1)">l2</a>
+<a href="java&#x09;script:alert(1)">l3</a>
+<a href="java&#10;script:alert(1)">l4</a>
+<a href="&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;alert(1)">l5</a>
+<a href="&#x01; javascript:alert(1)">l6</a>
+<a href="  javascript:alert(1)">l7</a>
+<a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==">l8</a>
+<a href="vbscript:msgbox(1)">l9</a>
+<a href="/settings/delete-account">l10</a>
+<a href="//attacker.example/proto-relative">l11</a>
+<a href="file:///etc/passwd">l12</a>
+<a href="blob:https://mail.example/0000">l13</a>
+<a href="https://ok.example/page?utm_source=news&amp;utm_medium=email&amp;fbclid=abc&amp;id=7" target="_blank">l14</a>
+<a href="mailto:someone@example.com?subject=Hi&amp;attach=/etc/passwd">l15</a>
+<a href="#section-2">l16</a>
+<a href="https://ok.example/" ping="https://attacker.example/ping" referrerpolicy="unsafe-url" download>l17</a>
+<map name="m"><area shape="rect" coords="0,0,10,10" href="javascript:alert(1)" alt="area"></map>
+<a href="tel:+34600000000">l18</a>
+<p id="section-2">Section 2</p>
+</body></html>

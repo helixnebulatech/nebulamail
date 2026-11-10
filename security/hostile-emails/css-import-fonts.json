@@ -1,0 +1,5 @@
+{
+  "title": "@import and external web fonts",
+  "attacks": ["css-import", "css-import-string", "escaped-at-rule", "font-face", "unicode-range-probe", "link-stylesheet"],
+  "expect": { "visibleText": ["Fonts and imports"] }
+}

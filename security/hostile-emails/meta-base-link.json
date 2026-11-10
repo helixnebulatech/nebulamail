@@ -1,0 +1,5 @@
+{
+  "title": "meta refresh/CSP override, base href, link prefetch/preload",
+  "attacks": ["meta-refresh", "meta-csp-override", "dns-prefetch-on", "referrer-override", "base-href", "link-prefetch", "link-preload", "link-icon", "appcache-manifest"],
+  "expect": { "visibleText": ["Meta, base and link"] }
+}

@@ -1,0 +1,5 @@
+{
+  "title": "Relative, protocol-relative and non-http image URLs (always blocked)",
+  "attacks": ["relative-image", "protocol-relative-image", "backslash-unc", "blob-image", "file-url", "ftp", "filesystem", "websocket", "javascript-src", "relative-css-url", "relative-background"],
+  "expect": { "visibleText": ["Relative URLs and odd schemes"], "remoteImagesExactly": ["https://cdn.example/leading-space.png"] }
+}

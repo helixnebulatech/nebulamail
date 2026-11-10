@@ -1,0 +1,5 @@
+{
+  "title": "Every image-loading attribute: src, srcset, picture/source, background, poster, lowsrc, data-src",
+  "attacks": ["srcset", "picture-source", "background-attribute", "poster", "video-src", "audio-src", "track", "lowsrc", "dynsrc", "longdesc", "data-src", "bgsound", "referrerpolicy", "credentials-in-url", "http-image"],
+  "expect": { "visibleText": ["Image attributes", "cell"], "remoteImagesAtLeast": 8 }
+}

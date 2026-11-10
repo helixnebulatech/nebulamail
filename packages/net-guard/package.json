@@ -1,0 +1,31 @@
+{
+  "name": "@nebulamail/net-guard",
+  "version": "0.0.0",
+  "private": true,
+  "description": "SSRF protection: runtime-agnostic core, Node/Deno, Bun and Workers adapters.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node/index.ts",
+    "./bun": "./src/bun/index.ts",
+    "./workers": "./src/workers/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsrs --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:bun": "EXPECT_RUNTIME=bun bun --bun vitest run",
+    "test:deno": "EXPECT_RUNTIME=deno deno run -A --node-modules-dir=manual node_modules/vitest/vitest.mjs run"
+  },
+  "dependencies": {
+    "ipaddr.js": "2.5.0",
+    "undici": "8.12.3"
+  },
+  "devDependencies": {
+    "@nebulamail/config": "workspace:*",
+    "tsrs": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "5.0.5",
+    "zod": "catalog:"
+  }
+}

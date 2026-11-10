@@ -1,0 +1,44 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Fuzz targets for `cargo fuzz` (nightly, CI only).
+# Run from this directory: `cargo +nightly fuzz run form`.
+
+[package]
+name = "nebula-http-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "AGPL-3.0-only"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+nebula-http = { path = "..", features = ["fuzzing"] }
+
+# Standalone: not a member of the bridge workspace (needs nightly).
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "form"
+path = "fuzz_targets/form.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "basic_auth"
+path = "fuzz_targets/basic_auth.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fields"
+path = "fuzz_targets/fields.rs"
+test = false
+doc = false
+bench = false

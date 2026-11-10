@@ -1,0 +1,94 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+dist
+build
+*.tsbuildinfo
+
+# Generated files
+apps/web/src/routeTree.gen.ts
+local.db
+local.db-*
+
+# Environment variables
+.env
+.env*.local
+
+# IDEs and editors
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs
+.evlog/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Turbo
+.turbo
+.nx
+
+# Better-T-Stack
+.alchemy
+.vercel
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+*.tgz
+.cache
+tmp
+temp
+
+# Local server secrets
+docker/.env
+
+# Rust
+bridge/target
+# cargo-fuzz output (each fuzz crate is its own workspace)
+bridge/crates/*/fuzz/target
+bridge/crates/*/fuzz/corpus
+bridge/crates/*/fuzz/artifacts
+bridge/crates/*/fuzz/coverage
+bridge/crates/*/fuzz/Cargo.lock
+
+# StyleX dev cache
+node_modules/.stylex
+
+# Playwright
+test-results
+playwright-report
+
+# Vitest output
+.vitest
+
+# Local CI logs (scripts/ci-local.sh)
+.ci-local/
+
+# Agent worktrees (Claude Code)
+.claude/worktrees/
+
+# Internal notes (audits, design drafts): kept on the maintainers' disk, never pushed.
+/internal/
+# Local agent instructions.
+/CLAUDE.md
+
+# scripts/release/dry-run.sh
+/dist-release/

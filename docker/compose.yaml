@@ -1,0 +1,244 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Local development servers. Start only when needed:
+#   docker compose -f docker/compose.yaml up -d stalwart
+# Every port is bound to 127.0.0.1 so nothing is exposed to the network.
+
+name: nebula-dev
+
+services:
+  # Its store lives in the `stalwart-v1-*` volumes (the names come from the
+  # move to 1.0; kept so the data stays). Never recreated (docker/README.md).
+  stalwart:
+    image: docker.io/stalwartlabs/stalwart:v1.1.0
+    restart: unless-stopped
+    env_file:
+      # Optional so that commands for other services (the static test's
+      # `restart stalwart-static` in CI) work without docker/.env.
+      - path: .env
+        required: false
+    environment:
+      STALWART_HOSTNAME: localhost
+      STALWART_PUBLIC_URL: http://localhost:8080
+    ports:
+      - "127.0.0.1:8080:8080" # HTTP: JMAP, OAuth, admin UI
+      - "127.0.0.1:1993:993" # IMAPS
+      - "127.0.0.1:1465:465" # SMTP submission (implicit TLS; Stalwart has no 587 listener by default)
+      - "127.0.0.1:2525:25" # SMTP, to deliver test mail
+      - "127.0.0.1:4190:4190" # ManageSieve
+    volumes:
+      - stalwart-v1-etc:/etc/stalwart
+      - stalwart-v1-data:/var/lib/stalwart
+
+  # Tests only: a throwaway Stalwart that serves the static zip
+  # (docs/static.md), for `bun run test:static` in apps/web. Never the
+  # dev one above: its own project, port and anonymous volumes, removed at
+  # the end (`docker compose -p nebula-static-test -f docker/compose.yaml
+  # --profile static rm -sfv stalwart-static`). The zip is mounted read-only
+  # and installed as an `Application` from `file:///opt/nebula-static/…`.
+  # The recovery admin comes from the environment (random, set by whoever
+  # starts it); docker/.env is not used.
+  stalwart-static:
+    image: docker.io/stalwartlabs/stalwart:v1.1.0
+    profiles: ["static"]
+    environment:
+      STALWART_HOSTNAME: localhost
+      STALWART_PUBLIC_URL: http://localhost:8095
+      STALWART_RECOVERY_ADMIN: ${STALWART_STATIC_RECOVERY_ADMIN:-}
+    ports:
+      - "127.0.0.1:8095:8080" # HTTP: the zip, OAuth, JMAP
+    volumes:
+      - ../apps/web/dist-static:/opt/nebula-static:ro
+
+  # IMAP server without JMAP, to test the bridge. Not started
+  # by default: `docker compose -f docker/compose.yaml --profile bridge up -d dovecot`.
+  # Any user name works, with the password in TEST_DOVECOT_PASSWORD (or
+  # "password"). Submission relays to Stalwart, so mail to alice@localhost
+  # arrives there.
+  dovecot:
+    image: docker.io/dovecot/dovecot:2.4.5
+    profiles: ["bridge"]
+    restart: unless-stopped
+    environment:
+      USER_PASSWORD: ${TEST_DOVECOT_PASSWORD:-password}
+      # Alice's Stalwart password (docker/.env, written by setup.ts), to
+      # relay sent mail (dovecot/nebula.conf).
+      RELAY_PASSWORD: ${TEST_ALICE_PASSWORD:-}
+    ports:
+      - "127.0.0.1:2143:31143" # IMAP (STARTTLS)
+      - "127.0.0.1:2993:31993" # IMAPS
+      - "127.0.0.1:2465:31465" # Submission (implicit TLS)
+      - "127.0.0.1:2587:31587" # Submission (STARTTLS)
+      - "127.0.0.1:24190:34190" # ManageSieve (Pigeonhole, STARTTLS)
+    volumes:
+      - ./dovecot/nebula.conf:/etc/dovecot/conf.d/nebula.conf:ro
+      # Tests only: folders `nebula-mail-test-*-noflags` can't keep
+      # keywords (dovecot/acl.conf). Not in dovecot-prefix.
+      - ./dovecot/acl.conf:/etc/dovecot/conf.d/zz-acl.conf:ro
+      - dovecot-data:/srv/vmail
+
+  # Tests only: a submission server that announces DSN (neither Stalwart,
+  # as set up here, nor Dovecot does), for the bridge's own ENVID and real bounces.
+  # `docker compose -f docker/compose.yaml --profile bridge
+  # up -d --build postfix`, after Dovecot. Same users and password as
+  # Dovecot; mail to alice@ and bob@nebulamail.test is delivered by Postfix
+  # itself into Dovecot's alice and bob (success reports say `delivered`),
+  # mail to @bounce.nebulamail.test bounces (postfix/entrypoint.sh).
+  postfix:
+    build: ./postfix
+    image: nebula-test-postfix:3.10
+    profiles: ["bridge"]
+    restart: unless-stopped
+    hostname: postfix.nebulamail.test
+    environment:
+      USER_PASSWORD: ${TEST_DOVECOT_PASSWORD:-password}
+    ports:
+      - "127.0.0.1:2466:465" # Submission (implicit TLS)
+      - "127.0.0.1:2588:587" # Submission (STARTTLS)
+      - "127.0.0.1:2469:4465" # Submission without 8BITMIME (implicit TLS)
+
+  # Tests only: Dovecot with folders under `INBOX.`, `.` between levels, and
+  # its own Postfix, for filters by folder and real vacation responses.
+  # Same users and password. Next to the others, it changes
+  # nothing in them: `docker compose -f docker/compose.yaml --profile
+  # bridge-prefix up -d --build --no-deps dovecot-prefix postfix-prefix`.
+  dovecot-prefix:
+    image: docker.io/dovecot/dovecot:2.4.5
+    profiles: ["bridge-prefix"]
+    restart: unless-stopped
+    environment:
+      USER_PASSWORD: ${TEST_DOVECOT_PASSWORD:-password}
+      RELAY_PASSWORD: ${TEST_ALICE_PASSWORD:-}
+    ports:
+      - "127.0.0.1:2994:31993" # IMAPS
+      - "127.0.0.1:24191:34190" # ManageSieve (STARTTLS)
+    volumes:
+      - ./dovecot/nebula.conf:/etc/dovecot/conf.d/nebula.conf:ro
+      - ./dovecot/prefix.conf:/etc/dovecot/conf.d/zz-prefix.conf:ro
+      - dovecot-prefix-data:/srv/vmail
+
+  postfix-prefix:
+    build: ./postfix
+    image: nebula-test-postfix:3.10
+    profiles: ["bridge-prefix"]
+    restart: unless-stopped
+    hostname: postfix.nebulamail.test
+    environment:
+      USER_PASSWORD: ${TEST_DOVECOT_PASSWORD:-password}
+      DOVECOT_HOST: dovecot-prefix
+    ports:
+      - "127.0.0.1:2467:465" # Submission (implicit TLS)
+
+  # CalDAV/CardDAV without JMAP, for the bridge's DAV client.
+  # `docker compose -f docker/compose.yaml --profile bridge up -d
+  # radicale`. Users alice and bob, with Dovecot's password (written by
+  # radicale/entrypoint.sh); plain HTTP, on loopback only. Config and
+  # entrypoint are built into the image (radicale/Dockerfile), not
+  # bind-mounted: the container keeps working after the checkout (git
+  # worktree) that created it is deleted. After changing them: `up -d
+  # --build radicale`.
+  radicale:
+    build: ./radicale
+    image: nebula-test-radicale:3.8.3
+    profiles: ["bridge"]
+    restart: unless-stopped
+    environment:
+      USER_PASSWORD: ${TEST_DOVECOT_PASSWORD:-password}
+    ports:
+      - "127.0.0.1:5232:5232" # CalDAV/CardDAV (HTTP)
+    volumes:
+      - radicale-data:/var/lib/radicale
+
+  # SabreDAV (Baïkal 0.10.1, sabre/dav 4.7), only for the bridge's sharing
+  # tests: CalendarServer sharing (`CS:share`). `docker
+  # compose -f docker/compose.yaml --profile bridge up -d baikal`. Users
+  # alice and bob with Dovecot's password (baikal/init-db.sh); plain HTTP
+  # on loopback, DAV root `/dav.php/`, no admin interface, never sends mail.
+  baikal:
+    # Config and init script built in (baikal/Dockerfile), as Radicale's.
+    build: ./baikal
+    image: nebula-test-baikal:0.10.1
+    profiles: ["bridge"]
+    restart: unless-stopped
+    environment:
+      USER_PASSWORD: ${TEST_DOVECOT_PASSWORD:-password}
+    ports:
+      - "127.0.0.1:5233:80" # CalDAV/CardDAV (HTTP)
+    volumes:
+      - baikal-data:/var/www/baikal/Specific
+
+  # PostgreSQL for the test Nextcloud below (as real installs; with SQLite
+  # two writes at once to the same event gave 500 «database is locked»).
+  # No port on the host: only Nextcloud reaches it, on the compose network.
+  # Throwaway test password.
+  nextcloud-db:
+    image: docker.io/library/postgres:17.11-alpine@sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b
+    profiles: ["bridge"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: nextcloud-test-db-7d41e2
+    healthcheck:
+      # Over TCP: during its first start the image runs a temporary server
+      # on the Unix socket only.
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-h",
+          "127.0.0.1",
+          "-U",
+          "nextcloud",
+          "-d",
+          "nextcloud",
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - nextcloud-db-data:/var/lib/postgresql/data
+
+  # Nextcloud 34 (sabre/dav with Nextcloud's own sharing, `oc:share`),
+  # only for the bridge's DAV tests against it. Big
+  # (~2 GB) and slow to install (~1 min the first time): `docker compose
+  # -f docker/compose.yaml --profile bridge up -d nextcloud` (starts
+  # nextcloud-db first). Users alice and bob with Dovecot's password
+  # (nextcloud/post-install.sh), PostgreSQL, plain HTTP on loopback, DAV
+  # root `/remote.php/dav/`, no mail, no app store, the admin disabled.
+  nextcloud:
+    # The post-install hook built in (nextcloud/Dockerfile), as Radicale's.
+    build: ./nextcloud
+    image: nebula-test-nextcloud:34.0.5
+    profiles: ["bridge"]
+    restart: unless-stopped
+    environment:
+      USER_PASSWORD: ${TEST_DOVECOT_PASSWORD:-password}
+      POSTGRES_HOST: nextcloud-db
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: nextcloud-test-db-7d41e2
+      # Disabled right after the install; nobody logs in with it.
+      NEXTCLOUD_ADMIN_USER: setup
+      NEXTCLOUD_ADMIN_PASSWORD: disabled-after-install-0f3c9a
+      NEXTCLOUD_TRUSTED_DOMAINS: 127.0.0.1 localhost
+    depends_on:
+      nextcloud-db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5234:80" # CalDAV/CardDAV (HTTP)
+    volumes:
+      # Not the old `nextcloud-data` (SQLite install): a new volume, so the
+      # install runs again against PostgreSQL.
+      - nextcloud-pg-data:/var/www/html
+
+volumes:
+  stalwart-v1-etc:
+  stalwart-v1-data:
+  dovecot-data:
+  dovecot-prefix-data:
+  radicale-data:
+  baikal-data:
+  nextcloud-db-data:
+  nextcloud-pg-data:

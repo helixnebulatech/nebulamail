@@ -1,0 +1,3 @@
+{
+  "extends": "@nebulamail/config/tsconfig.base.json"
+}

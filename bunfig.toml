@@ -1,0 +1,11 @@
+# Don't let Bun load .env files by itself: varlock loads and checks them
+# against apps/web/.env.schema (types, required, public vs secret), so
+# secrets only reach what asks for them.
+env = false
+
+[install]
+# Supply chain: only install package versions published at
+# least 2 days ago, so a hijacked release is usually caught and pulled first.
+minimumReleaseAge = 172800 # seconds
+# bun add writes exact versions (no ^), like the rest of package.json.
+exact = true

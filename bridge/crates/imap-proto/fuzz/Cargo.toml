@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Fuzz targets for `cargo fuzz` (nightly, CI only).
+# Run from this directory: `cargo +nightly fuzz run decode`.
+
+[package]
+name = "nebula-imap-proto-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+nebula-imap-proto = { path = ".." }
+
+# Standalone: not a member of the bridge workspace (needs nightly).
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "decode"
+path = "fuzz_targets/decode.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "utf7"
+path = "fuzz_targets/utf7.rs"
+test = false
+doc = false
+bench = false

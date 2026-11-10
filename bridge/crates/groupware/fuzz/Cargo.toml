@@ -1,0 +1,61 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Fuzz targets for `cargo fuzz` (nightly, CI only).
+# Run from this directory: `cargo +nightly fuzz run icalendar`. With only
+# the pinned stable toolchain, without sanitizer:
+# `RUSTC_BOOTSTRAP=1 cargo fuzz run -s none -O --debug-assertions icalendar`.
+# Each target turns a panic caught by our wrapper back into a crash.
+
+[package]
+name = "nebula-groupware-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "AGPL-3.0-only"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+nebula-groupware = { path = ".." }
+
+# Standalone: not a member of the bridge workspace (needs nightly).
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "icalendar"
+path = "fuzz_targets/icalendar.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "vcard"
+path = "fuzz_targets/vcard.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "json"
+path = "fuzz_targets/json.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "defaults"
+path = "fuzz_targets/defaults.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "counter"
+path = "fuzz_targets/counter.rs"
+test = false
+doc = false
+bench = false

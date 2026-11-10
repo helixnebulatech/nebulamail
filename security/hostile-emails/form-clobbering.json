@@ -1,0 +1,7 @@
+{
+  "title": "A form whose inputs clobber DOM properties the sanitizer reads",
+  "attacks": ["dom-clobbering-tagName", "dom-clobbering-attributes", "form-action"],
+  "references": ["https://github.com/cure53/DOMPurify/wiki/Security-Goals-&-Threat-Model#dom-clobbering"],
+  "note": "In real browsers the named getter of <form> makes the vendored Proton hook throw (element.tagName is an <input>): the email must fall back to text instead of throwing. jsdom has no named getter, so there it renders as HTML.",
+  "expect": { "visibleText": ["Form clobbering"] }
+}

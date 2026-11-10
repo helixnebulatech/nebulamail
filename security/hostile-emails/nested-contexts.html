@@ -1,0 +1,14 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<html><body>
+<p>Nested contexts</p>
+<iframe src="https://attacker.example/frame"></iframe>
+<iframe srcdoc="&lt;img src=https://attacker.example/srcdoc.png&gt;"></iframe>
+<iframe src="data:text/html,%3Cscript%3Ealert(1)%3C/script%3E"></iframe>
+<object data="https://attacker.example/obj.swf" type="application/x-shockwave-flash"><param name="movie" value="https://attacker.example/param.swf"><img src="https://cdn.example/object-fallback.png" width="50" height="50"></object>
+<embed src="https://attacker.example/embed.svg" type="image/svg+xml">
+<applet code="X.class" codebase="https://attacker.example/"></applet>
+<frameset><frame src="https://attacker.example/frame2"></frameset>
+<portal src="https://attacker.example/portal"></portal>
+<fencedframe src="https://attacker.example/fenced"></fencedframe>
+</body></html>

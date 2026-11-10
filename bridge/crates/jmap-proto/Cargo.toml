@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+[package]
+name = "nebula-jmap-proto"
+description = "JMAP types: requests, responses, objects and errors, without I/O"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license = "MIT OR Apache-2.0"
+repository.workspace = true
+publish.workspace = true
+
+# No dependency on `nebula-types`: that crate is AGPL-3.0-only and this one
+# is MIT OR Apache-2.0, so the JMAP `Id` lives here.
+[dependencies]
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+time.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+ignore = [
+  # SQLite before 3.54 can read uninitialized memory when it opens a database
+  # whose -wal file someone else wrote with another page size. The bridge
+  # only opens its own database (mode 0600, written only by itself). The fix
+  # (libsqlite3-sys 0.39) needs a diesel release that allows it: diesel
+  # 2.3.14 requires < 0.39. Remove this once diesel can be updated.
+  { id = "RUSTSEC-2026-0459", reason = "only our own 0600 database is opened; diesel 2.3.14 caps libsqlite3-sys below the fix" },
+]
+
+[licenses]
+version = 2
+confidence-threshold = 0.9
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Unicode-3.0",
+  "Zlib",
+  "CDLA-Permissive-2.0",
+  "AGPL-3.0-only",
+]
+# Library crates (MIT OR Apache-2.0) must never depend on AGPL/GPL code:
+# checked in CI with `cargo deny --exclude` per library.
+#
+# calcard and jmap-tools (vendored from Stalwart, `vendor/calcard`) are
+# `AGPL-3.0-only OR LicenseRef-SEL`: allowed through the AGPL-3.0-only branch,
+# the licence we use them under. `[bans]` below lets only AGPL crates
+# depend on them.
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# Path dependencies inside this workspace (all crates are publish = false).
+allow-wildcard-paths = true
+# native-tls/openssl are banned: rustls + aws-lc-rs only.
+deny = [
+  { crate = "openssl" },
+  { crate = "openssl-sys" },
+  { crate = "native-tls" },
+  # AGPL (see `[licenses]`): only as a direct dependency of these AGPL
+  # crates. Add one here only if it is AGPL too.
+  { crate = "calcard", wrappers = ["nebula-groupware"] },
+  { crate = "jmap-tools", wrappers = ["calcard"] },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

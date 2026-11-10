@@ -1,0 +1,9 @@
+{
+  "title": "Spy pixels of various sizes and the spacer exceptions",
+  "attacks": ["spy-pixel-1x1", "spy-pixel-0x0", "one-side", "small-side", "small-area", "zero-side-takes-other", "px-suffix", "inline-style-size", "important", "max-width", "max-height", "css-background-pixel"],
+  "expect": {
+    "visibleText": ["Spy pixels"],
+    "spyPixels": 13,
+    "remoteImagesExactly": ["https://px.example/6x5.gif", "https://cdn.example/spacer.gif", "https://cdn.example/images/transparent.gif", "https://cdn.example/percent.png", "https://cdn.example/normal.png"]
+  }
+}

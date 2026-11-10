@@ -1,0 +1,202 @@
+import {
+    escape,
+    escapeForbiddenStyle,
+    escapeURLinStyle,
+    neutralizeStyleBreakout,
+    recurringUnescapeCSSEncoding,
+    unescape,
+} from './escape';
+
+describe('Escape', () => {
+    describe('escapeForbiddenStyles', () => {
+        it('Should replace absolute styles by relative', () => {
+            expect(escapeForbiddenStyle('position: absolute')).toBe('position: relative');
+        });
+
+        it('Should replace fixed and sticky styles by inherit', () => {
+            expect(escapeForbiddenStyle('position: fixed')).toBe('position: inherit');
+            expect(escapeForbiddenStyle('position: sticky')).toBe('position: inherit');
+            expect(escapeForbiddenStyle('position:-webkit-sticky')).toBe('position: inherit');
+        });
+
+        it('Should replace percentage height by unset', () => {
+            expect(escapeForbiddenStyle('height: 100%; min-height: 30% ; max-height:  50%;')).toBe(
+                'height: unset; min-height: unset ; max-height:  50%;'
+            );
+        });
+
+        it('Should not replace percent line-height by unset', () => {
+            expect(escapeForbiddenStyle('line-height: 100%;')).toBe('line-height: 100%;');
+        });
+
+        it('Should disable dark styles Color schemes', () => {
+            expect(escapeForbiddenStyle('Color-scheme: light dark;')).toBe('proton-disabled-Color-scheme: light dark;');
+        });
+
+        it('Should disable dark styles media queries', () => {
+            expect(escapeForbiddenStyle('(prefers-color-scheme: dark)')).toBe(
+                '(prefers-proton-disabled-Color-scheme: dark)'
+            );
+        });
+
+        it('Should neutralize position fixed obfuscated with a CSS hex escape', () => {
+            expect(escapeForbiddenStyle('position:\\66 ixed')).toBe('position: inherit');
+        });
+
+        it('Should neutralize position absolute obfuscated with a CSS hex escape', () => {
+            expect(escapeForbiddenStyle('position:\\61 bsolute')).toBe('position: relative');
+        });
+
+        it('Should neutralize position fixed obfuscated with an HTML entity', () => {
+            expect(escapeForbiddenStyle('position:&#x66;ixed')).toBe('position: inherit');
+        });
+    });
+
+    describe('recurringUnescapeCSSEncoding', () => {
+        it('should return the expected unescaped CSS string when there is few escapes', () => {
+            const string = `background
+            ur&#x26;#x26;#x26;#x26;#x26;(https://proton.me/image.jpg);`;
+            const expectedString = `background
+            ur&(https://proton.me/image.jpg);`;
+
+            expect(recurringUnescapeCSSEncoding(string)).toEqual(expectedString);
+        });
+
+        it('should return an empty string when trying to unescape CSS a content with too much escapes', () => {
+            const string = `background
+            ur&#x26;#x26;#x26;#x26;#x26;#x26;(https://proton.me/image.jpg);`;
+            const expectedString = ``;
+
+            expect(recurringUnescapeCSSEncoding(string)).toEqual(expectedString);
+        });
+
+        it('should correctly unescape CSS encoded /75 issue', () => {
+            const input = 'background: \\75\trl(https://attacker.com);';
+            const expected = 'background: url(https://attacker.com);';
+            expect(recurringUnescapeCSSEncoding(input)).toBe(expected);
+        });
+
+        it('should consume a CRLF pair as a single escape terminator', () => {
+            const input = 'background: \\75\r\nrl(https://attacker.com);';
+            const expected = 'background: url(https://attacker.com);';
+            expect(recurringUnescapeCSSEncoding(input)).toBe(expected);
+        });
+
+        it('should consume a lone CR as an escape terminator', () => {
+            const input = 'background: \\75\rrl(https://attacker.com);';
+            const expected = 'background: url(https://attacker.com);';
+            expect(recurringUnescapeCSSEncoding(input)).toBe(expected);
+        });
+
+        it('should consume a form feed as an escape terminator', () => {
+            const input = 'background: \\75\frl(https://attacker.com);';
+            const expected = 'background: url(https://attacker.com);';
+            expect(recurringUnescapeCSSEncoding(input)).toBe(expected);
+        });
+    });
+
+    describe('escapeURLinStyle', () => {
+        it('should return an empty string when trying to escape ', () => {
+            const style = `background
+            ur&#x26;#x26;#x26;#x26;#x26;#x26;(https://proton.me/image.jpg);`;
+
+            expect(escapeURLinStyle(style)).toEqual('');
+        });
+
+        it('should return the decoded style when nothing url-like is escaped', () => {
+            const style = `background
+            ur&#x26;#x26;#x26;#x26;#x26;(https://proton.me/image.jpg);`;
+
+            // The escapes are decoded (ur&(...) is not a url()) and the resulting `&` is HTML-escaped.
+            expect(escapeURLinStyle(style)).toEqual(`background
+            ur&amp;(https://proton.me/image.jpg);`);
+        });
+
+        it('should neutralize a position:fixed obfuscated with a CSS hex escape through the full pipeline', () => {
+            const style = 'position:\\66 ixed;top:0;left:0;width:100%;height:100%';
+
+            const sanitized = escapeForbiddenStyle(escapeURLinStyle(style));
+
+            expect(sanitized).toContain('position: inherit');
+            expect(sanitized).not.toMatch(/position\s*:\s*fixed/i);
+            expect(sanitized).not.toContain('\\66');
+        });
+
+        it('should escape a malicious URL inside an @import statement', () => {
+            const style = `@import 'https://malicious-tracker.example.com/spy.css';`;
+
+            expect(escapeURLinStyle(style)).toEqual(
+                `@import proton-url('https://malicious-tracker.example.com/spy.css');`
+            );
+        });
+
+        it('should escape a URL hidden between CSS comments (comment-based bypass)', () => {
+            const style = `* { background:/*@import '*/ url(https://attacker.com/image.png); /*'*/ }`;
+
+            expect(escapeURLinStyle(style)).toEqual(`* { background: proton-url(https://attacker.com/image.png);  }`);
+        });
+
+        it('should escape a URL preceded by a CSS comment', () => {
+            const style = `/* hidden */ background: url(https://attacker.com/image.png);`;
+
+            expect(escapeURLinStyle(style)).toEqual(` background: proton-url(https://attacker.com/image.png);`);
+        });
+
+        it('should strip CSS comments even when no URLs are present', () => {
+            const style = `/* comment */ color: red;`;
+
+            expect(escapeURLinStyle(style)).toEqual(` color: red;`);
+        });
+
+        it('should escape a URL obfuscated with a hex escape and a CRLF pair', () => {
+            const style = 'background-image:\\75\r\nrl(https://attacker.example/image.png)';
+
+            const escaped = escapeURLinStyle(style);
+
+            expect(escaped).toContain('proton-url(');
+            expect(escaped).not.toMatch(/[^-]url\(/);
+        });
+    });
+
+    describe('unescape', () => {
+        it('should unescape the string', () => {
+            const string = `&lt;Hello&gt;&amp;&quot;&lt;Bye&gt;&#39;`;
+            const expected = `<Hello>&"<Bye>'`;
+
+            expect(unescape(string)).toEqual(expected);
+        });
+    });
+
+    describe('escape', () => {
+        it('should escape the string', () => {
+            const string = `<Hello>&"<Bye>'`;
+            const expected = `&lt;Hello&gt;&amp;&quot;&lt;Bye&gt;&#39;`;
+
+            expect(escape(string)).toEqual(expected);
+        });
+    });
+
+    describe('neutralizeStyleBreakout', () => {
+        it('should escape a </style> breakout smuggled into CSS text', () => {
+            const input = '.x { content: "</style><img src=x onerror=alert(1)>"; }';
+            const output = neutralizeStyleBreakout(input);
+
+            expect(output).not.toContain('</');
+            expect(output).toContain('\\3c /style>');
+        });
+
+        it('should neutralize any "</" sequence regardless of the following tag name', () => {
+            expect(neutralizeStyleBreakout('a</STYLE b')).toBe('a\\3c /STYLE b');
+            expect(neutralizeStyleBreakout('a</div b')).toBe('a\\3c /div b');
+        });
+
+        it('should preserve valid range media queries with < and >', () => {
+            const input = '@media (width > 600px) and (100px < height) { a { color: red } }';
+            expect(neutralizeStyleBreakout(input)).toBe(input);
+        });
+
+        it('should not alter a standalone < not followed by a slash', () => {
+            expect(neutralizeStyleBreakout('a < b')).toBe('a < b');
+        });
+    });
+});

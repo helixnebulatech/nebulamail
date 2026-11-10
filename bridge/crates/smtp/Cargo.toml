@@ -1,0 +1,34 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[package]
+name = "nebula-smtp"
+description = "Mail submission over SMTP (lettre as transport only)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+# Own ENVIDs (`EnvelopeId::random`): the operating system's CSPRNG.
+getrandom.workspace = true
+lettre.workspace = true
+# Implicit TLS (port 465) is done here, before lettre sees the stream: lettre
+# can only start TLS on a stream it connected itself (see `core/tls.rs`).
+rustls.workspace = true
+tokio-rustls.workspace = true
+rustls-platform-verifier.workspace = true
+secrecy.workspace = true
+tokio = { workspace = true, features = ["net", "time", "macros"] }
+tracing.workspace = true
+
+[dev-dependencies]
+nebula-tests.workspace = true
+proptest.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "io-util", "test-util"] }
+
+[lints]
+workspace = true

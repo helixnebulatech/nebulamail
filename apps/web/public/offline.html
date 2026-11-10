@@ -1,0 +1,40 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!--
+  Shown by the service worker (src/pwa/sw.ts) when a page can't load
+  without network. Static and the same for everyone: no user data, no
+  scripts. Both languages, since it can't know the user's.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Nebula Mail · Offline</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/offline.css" />
+  </head>
+  <body>
+    <main>
+      <img src="/favicon.svg" alt="" width="64" height="64" />
+      <section lang="en">
+        <h1>You're offline</h1>
+        <p>Nebula Mail needs a connection to show your mail.</p>
+      </section>
+      <section lang="es">
+        <h1>Sin conexión</h1>
+        <p>Nebula Mail necesita conexión para mostrar tu correo.</p>
+      </section>
+      <a href="">Try again · Reintentar</a>
+    </main>
+  </body>
+</html>

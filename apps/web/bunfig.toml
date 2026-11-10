@@ -1,0 +1,6 @@
+# Don't let Bun load .env files by itself: varlock loads and checks them
+# against .env.schema (types, required, public vs secret), so secrets only
+# reach what asks for them. Bun reads this per directory (commands run here,
+# e.g. by turbo, don't use the root bunfig.toml for it); install settings
+# come from the root bunfig.toml.
+env = false

@@ -1,0 +1,40 @@
+#!/sbin/openrc-run
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# OpenRC service for the preload relay (README "Preload › Relay"). Install as
+# /etc/init.d/nebula-preload-relay. Same assumptions as the systemd unit:
+# repository at /opt/nebulamail, user nebula-relay, variables in
+# /etc/nebula-preload-relay/relay.env (root:nebula-relay 0640).
+
+description="Nebula Mail preload relay (sends only image URLs to the image proxy)"
+
+RELAY_DIR="${RELAY_DIR:-/opt/nebulamail/packages/image-proxy}"
+RELAY_ENV="${RELAY_ENV:-/etc/nebula-preload-relay/relay.env}"
+
+command="/usr/bin/node"
+command_args="--import ./scripts/node-resolve-ts.ts src/node/relay-server.ts"
+command_user="nebula-relay:nebula-relay"
+command_background=yes
+directory="${RELAY_DIR}"
+pidfile="/run/${RC_SVCNAME}.pid"
+output_log="/var/log/${RC_SVCNAME}.log"
+error_log="/var/log/${RC_SVCNAME}.log"
+umask=0077
+# No new privileges (OpenRC 0.44+); the user has no capabilities anyway.
+no_new_privs=yes
+
+depend() {
+	need net
+	before stalwart
+}
+
+start_pre() {
+	[ -r "${RELAY_ENV}" ] || { eerror "${RELAY_ENV} not found"; return 1; }
+	checkpath --file --owner nebula-relay:nebula-relay --mode 0600 "${output_log}"
+	# Export the variables for the relay only (never on the command line).
+	set -a
+	# shellcheck disable=SC1090
+	. "${RELAY_ENV}"
+	set +a
+}

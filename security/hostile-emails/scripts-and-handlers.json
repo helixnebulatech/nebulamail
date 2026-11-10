@@ -1,0 +1,5 @@
+{
+  "title": "Script elements and event handlers",
+  "attacks": ["script", "script-src", "onerror", "onload", "ontoggle", "split-tag", "speculation-rules", "event-handlers"],
+  "expect": { "visibleText": ["Scripts", "hover", "styled"] }
+}

@@ -1,0 +1,19 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<html manifest="https://attacker.example/app.manifest"><head>
+<meta http-equiv="refresh" content="0;url=https://attacker.example/refresh">
+<meta http-equiv="set-cookie" content="a=b">
+<meta http-equiv="Content-Security-Policy" content="default-src *">
+<meta http-equiv="x-dns-prefetch-control" content="on">
+<meta name="referrer" content="unsafe-url">
+<base href="https://attacker.example/">
+<link rel="prefetch" href="https://attacker.example/prefetch">
+<link rel="dns-prefetch" href="//attacker.example">
+<link rel="preconnect" href="https://attacker.example">
+<link rel="icon" href="https://attacker.example/favicon.ico">
+<link rel="preload" as="image" href="https://attacker.example/preload.png">
+</head><body>
+<p>Meta, base and link</p>
+<img src="relative.png" alt="relative">
+<a href="relative-link">relative link</a>
+</body></html>

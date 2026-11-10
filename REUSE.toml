@@ -1,0 +1,113 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+version = 1
+
+# Files that cannot carry a comment header (JSON, lockfiles, generated code).
+[[annotations]]
+path = [
+  "**/package.json",
+  "**/tsconfig*.json",
+  "turbo.json",
+  "bts.jsonc",
+  "bun.lock",
+  "bridge/Cargo.lock",
+  "**/.gitignore",
+  "**/bunfig.toml",
+  "apps/web/.env.schema",
+  "apps/web/messages/*.json",
+  "apps/web/project.inlang/settings.json",
+  "apps/web/src/env.ts",
+  "apps/web/public/**",
+  "docs/images/**",
+  "docker/.env.example",
+  "packages/image-proxy/vercel.json",
+  "packages/image-proxy/deploy/relay/stalwart-mta-hook.ndjson",
+  "README.md",
+  "SECURITY.md",
+  "CONTRIBUTING.md",
+]
+SPDX-FileCopyrightText = "2026 Nebula Mail contributors"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+[[annotations]]
+path = "security/ssrf-vectors.json"
+SPDX-FileCopyrightText = "2026 Nebula Mail contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+[[annotations]]
+path = ["security/hostile-emails/*.json", "security/parser-vectors.json"]
+SPDX-FileCopyrightText = "2026 Nebula Mail contributors"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+# Vendored, unmodified. See each folder's README.
+[[annotations]]
+path = "packages/mail-render/vendor/proton-sanitize/**"
+precedence = "override"
+SPDX-FileCopyrightText = "Proton Technologies AG"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = "packages/mail-render/vendor/mail-trackers/**"
+precedence = "override"
+SPDX-FileCopyrightText = "2020 Aaron Lee"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+# lettre 0.11.23 with our security patches (bridge/vendor/lettre/PATCHES.md).
+[[annotations]]
+path = "bridge/vendor/lettre/**"
+precedence = "override"
+SPDX-FileCopyrightText = [
+  "2014-2024 Alexis Mousset <contact@amousset.me>",
+  "2019-2025 Paolo Barbolini <paolo@paolo565.org>",
+  "2018 K. <kayo@illumium.org>",
+  "2026 Nebula Mail contributors",
+]
+SPDX-License-Identifier = "MIT"
+
+# calcard 0.4 and jmap-tools 0.1.9 from Stalwart's monorepo, used under
+# AGPL-3.0-only (the other option is Stalwart's commercial SEL;
+# bridge/vendor/calcard/PATCHES.md). Their SPDX headers stay as they are.
+[[annotations]]
+path = ["bridge/vendor/calcard/**", "bridge/vendor/jmap-tools/**"]
+precedence = "override"
+SPDX-FileCopyrightText = [
+  "2020 Stalwart Labs LLC <hello@stalw.art>",
+  "2026 Nebula Mail contributors",
+]
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+# Self-signed certificate and key for the STARTTLS tests (protect nothing).
+[[annotations]]
+path = "bridge/crates/smtp/tests/data/**"
+SPDX-FileCopyrightText = "2026 Nebula Mail contributors"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+# Sample calendars and cards for the calcard tests (CRLF, no room for a header).
+[[annotations]]
+path = "bridge/crates/groupware/tests/data/**"
+SPDX-FileCopyrightText = "2026 Nebula Mail contributors"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+# Failing cases saved by proptest (generated). Same licence as their crate:
+# the later annotation wins for the MIT/Apache crates.
+[[annotations]]
+path = "bridge/crates/*/proptest-regressions/**"
+SPDX-FileCopyrightText = "2026 Nebula Mail contributors"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+[[annotations]]
+path = [
+  "bridge/crates/net-guard/proptest-regressions/**",
+  "bridge/crates/imap-proto/proptest-regressions/**",
+  "bridge/crates/jmap-proto/proptest-regressions/**",
+]
+SPDX-FileCopyrightText = "2026 Nebula Mail contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# Geist Sans (Latin subset) served by the bridge for its sign-in page.
+[[annotations]]
+path = "bridge/crates/http/assets/geist-latin-wght-normal.woff2"
+precedence = "override"
+SPDX-FileCopyrightText = "2024 The Geist Project Authors"
+SPDX-License-Identifier = "OFL-1.1"

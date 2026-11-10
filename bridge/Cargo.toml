@@ -1,0 +1,173 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[workspace]
+resolver = "3"
+members = ["crates/*", "tests"]
+# Vendored third-party crates (patched, see `[patch.crates-io]`): not members,
+# so our lints and formatting don't apply to them.
+exclude = ["vendor"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+license = "AGPL-3.0-only"
+repository = "https://github.com/helixnebulatech/nebulamail"
+publish = false
+
+[workspace.dependencies]
+# Internal crates
+nebula-types = { path = "crates/types" }
+net-guard = { path = "crates/net-guard" }
+nebula-crypto = { path = "crates/crypto" }
+nebula-imap-proto = { path = "crates/imap-proto" }
+nebula-managesieve-proto = { path = "crates/managesieve-proto" }
+nebula-managesieve = { path = "crates/managesieve" }
+nebula-autoconfig = { path = "crates/autoconfig" }
+nebula-imap = { path = "crates/imap" }
+nebula-smtp = { path = "crates/smtp" }
+nebula-jmap-proto = { path = "crates/jmap-proto" }
+nebula-store = { path = "crates/store" }
+nebula-mail = { path = "crates/mail" }
+nebula-jmap = { path = "crates/jmap" }
+nebula-http = { path = "crates/http" }
+nebula-groupware = { path = "crates/groupware" }
+nebula-tls = { path = "crates/tls" }
+nebula-dav-proto = { path = "crates/dav-proto" }
+nebula-dav = { path = "crates/dav" }
+nebula-webpush = { path = "crates/webpush" }
+nebula-tests = { path = "tests" }
+
+# External crates. Only versions published at least
+# 2 days ago, like `minimumReleaseAge` for npm: Cargo has no such
+# setting, so check the date before adding or updating one.
+# Async runtime and I/O
+tokio = { version = "1.54.1", default-features = false }
+tokio-util = { version = "0.7.20", default-features = false }
+tokio-stream = { version = "0.1.19", default-features = false }
+futures = { version = "0.3.34", default-features = false, features = ["std"] }
+bytes = "1.12.1"
+# TLS: rustls + aws-lc-rs only, never OpenSSL or ring
+rustls = { version = "0.23.46", default-features = false, features = ["std", "aws_lc_rs", "tls12", "logging"] }
+rustls-pki-types = "1.15.1"
+rustls-platform-verifier = "0.7.1"
+tokio-rustls = { version = "0.26.6", default-features = false, features = ["aws_lc_rs", "tls12"] }
+hickory-resolver = { version = "0.26.3", default-features = false, features = ["tokio", "system-config"] }
+# Mail
+imap-proto = "0.17.0"
+mail-parser = { version = "1.0.0", features = ["full_encoding"] }
+# The SIMD base64 and quoted-printable codecs mail-parser uses: the
+# piece-by-piece decoder of downloads decodes like it (crates/mail).
+encodify = "1.0.2"
+# NFC for the Text form of header fields (RFC 8621 §4.1.2.2); already in the
+# tree through `idna`.
+icu_normalizer = { version = "2.4.0", default-features = false, features = ["compiled_data"] }
+# No `gethostname`: generated Message-IDs would carry the bridge host name.
+mail-builder = { version = "2.0.0", default-features = false }
+lettre = { version = "0.11.23", default-features = false, features = ["smtp-transport", "tokio1", "tokio1-rustls", "aws-lc-rs", "rustls-platform-verifier"] }
+# Calendars and contacts: Stalwart's calcard 0.4 (AGPL-3.0-only OR
+# LicenseRef-SEL, not on crates.io), vendored with its jmap-tools. Only for
+# AGPL crates (`vendor/calcard/PATCHES.md`).
+calcard = { path = "vendor/calcard", default-features = false, features = ["jmap", "tzdb-bundle"] }
+# HTTP server
+axum = { version = "0.8.9", default-features = false, features = ["http1", "http2", "json", "query", "form", "tokio", "tower-log"] }
+tower = { version = "0.5.3", default-features = false }
+tower-http = { version = "0.7.1", default-features = false }
+http = "1.5.0"
+# Our own accept loop (axum::serve has no header read timeout).
+hyper = { version = "1.12.0", default-features = false, features = ["server", "http1", "http2"] }
+hyper-util = { version = "0.1.21", default-features = false, features = ["tokio", "service"] }
+http-body-util = "0.1.5"
+# Storage
+diesel = { version = "2.3.14", default-features = false, features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
+diesel-async = { version = "0.9.2", features = ["sqlite", "deadpool"] }
+diesel_migrations = { version = "2.3.2", features = ["sqlite"] }
+libsqlite3-sys = { version = "0.38.2", features = ["bundled"] }
+# Cryptography and secrets
+chacha20poly1305 = { version = "0.11.0", default-features = false, features = ["alloc"] }
+argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "password-hash"] }
+sha2 = "0.11.1"
+hmac = "0.13.0"
+subtle = "2.6.1"
+getrandom = "0.4.3"
+# Web Push (extension): ECDH P-256, ECDSA P-256 (VAPID),
+# AES-128-GCM and HKDF from the aws-lc-rs that rustls already uses, so no
+# new crypto crate enters the tree.
+aws-lc-rs = { version = "1.18.2", default-features = false, features = ["aws-lc-sys", "alloc"] }
+secrecy = "0.10.3"
+zeroize = { version = "1.9.1", features = ["derive"] }
+# Encoding and data
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+toml = "0.9.8"
+base64 = "0.23.1"
+data-encoding = "2.11.1"
+url = "2.5.8"
+idna = "1.1.0"
+time = { version = "0.3.55", features = ["formatting", "parsing", "macros"] }
+maud = "0.27.0"
+# CalDAV/CardDAV: multistatus XML without DTDs, and gzip or
+# deflate bodies of servers that compress anyway (decoded with a cap).
+roxmltree = { version = "0.21.2", default-features = false, features = ["std"] }
+flate2 = { version = "1.1.10", default-features = false, features = ["rust_backend"] }
+quick_cache = "0.7.0"
+# Errors and logs
+thiserror = "2.0.21"
+anyhow = "1.0.104"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", default-features = false, features = ["fmt", "env-filter", "ansi", "std"] }
+# Tests
+proptest = "1.12.0"
+tempfile = "3.27.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+unreachable_pub = "warn"
+unused_qualifications = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+# CI runs clippy with `-D warnings`, so every warning fails.
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+indexing_slicing = "deny"
+todo = "deny"
+unimplemented = "deny"
+dbg_macro = "deny"
+print_stdout = "deny"
+print_stderr = "deny"
+as_conversions = "deny"
+cast_possible_truncation = "deny"
+cast_sign_loss = "deny"
+cast_possible_wrap = "deny"
+mem_forget = "deny"
+exit = "deny"
+string_slice = "deny"
+undocumented_unsafe_blocks = "deny"
+module_name_repetitions = "allow"
+
+# argon2 is very slow without optimisations: one client secret hash takes
+# seconds in debug builds and tests.
+[profile.dev.package.argon2]
+opt-level = 3
+[profile.dev.package.blake2]
+opt-level = 3
+
+# lettre 0.11.23 with two security fixes (STARTTLS response injection, and
+# zeroizing its copies of the password): `vendor/lettre/PATCHES.md`. Drop
+# this as soon as a lettre release has them.
+[patch.crates-io]
+lettre = { path = "vendor/lettre" }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+overflow-checks = true
+# Not "abort": a panic inside a dependency (e.g. imap-proto on hostile input)
+# is caught and only fails that one response.
+panic = "unwind"

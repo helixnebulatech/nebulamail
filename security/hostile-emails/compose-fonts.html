@@ -1,0 +1,18 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<html><head>
+<style>
+@font-face { font-family: Arial; src: url(https://attacker.example/arial-spoof.woff2); }
+p[dir=rtl] { font-family: Arial; }
+</style>
+</head><body dir="rtl">
+<p dir="rtl" style="font-family: Arial, url(https://attacker.example/f1.woff); font-size: 14px">Fonts in a reply</p>
+<p style="font-family: Georgia; src: url(https://attacker.example/f2.woff)">Georgia with a src</p>
+<p style="font-family: var(--leak, url(https://attacker.example/f3.woff))">Font through var</p>
+<p style="font: 14px/1 url(https://attacker.example/f4.woff), Arial">Font shorthand</p>
+<p style="font-size: calc(14px + env(x)); font-size: attr(data-size px)" data-size="99">Size tricks</p>
+<p style="font-family: Ar\69 al; font-size: 1\34 px">Escaped names</p>
+<p dir="rtl&quot; style=&quot;background:url(https://attacker.example/dir)">Broken dir</p>
+<p dir="auto" style="font-family: 'Comic Sans MS', u\72l(https://attacker.example/f5.woff)">Auto dir</p>
+<span style="font-family: &quot;Times New Roman&quot;, serif; font-size: 32px">Entity quotes</span>
+</body></html>

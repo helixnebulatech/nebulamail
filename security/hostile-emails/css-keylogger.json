@@ -1,0 +1,6 @@
+{
+  "title": "CSS keylogger and fake login form",
+  "attacks": ["css-attribute-selector-exfiltration", "form-controls", "fake-login", "formaction", "input-type-image", "autofocus"],
+  "references": ["https://portswigger.net/research/css-the-bomb-inside-your-inbox"],
+  "expect": { "visibleText": ["Your session expired", "Sign in", "Reset link"] }
+}

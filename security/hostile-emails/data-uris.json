@@ -1,0 +1,5 @@
+{
+  "title": "data: URIs: raster shown, SVG and HTML blocked",
+  "attacks": ["data-image-png", "data-svg", "data-text-html-img", "uppercase-data-scheme", "data-svg-css", "object-data"],
+  "expect": { "visibleText": ["Data URIs"], "inlineImagesAtLeast": 2 }
+}

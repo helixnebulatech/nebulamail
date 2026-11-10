@@ -1,0 +1,205 @@
+/* SPDX-FileCopyrightText: 2026 Nebula Mail contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only */
+
+/* Rich-text editor (rich-text-editor.tsx). TipTap's own stylesheet is
+   turned off (`injectCSS: false`): it would be an inline <style> without
+   the CSP nonce. These are its rules plus our content styles. StyleX can't
+   style descendants, so they live here, scoped to .nm-editor. Colours come
+   from custom properties the StyleX wrapper sets (Helix tokens). */
+
+/* ProseMirror basics (from @tiptap/core's style.ts). */
+.nm-editor {
+  position: relative;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  white-space: break-spaces;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0;
+}
+
+.nm-editor [contenteditable="false"] {
+  white-space: normal;
+}
+
+.nm-editor [contenteditable="false"] [contenteditable="true"] {
+  white-space: pre-wrap;
+}
+
+.nm-editor pre {
+  white-space: pre-wrap;
+}
+
+.nm-editor img.ProseMirror-separator {
+  display: inline !important;
+  border: none !important;
+  margin: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.nm-editor .ProseMirror-gapcursor {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+  margin: 0;
+}
+
+.nm-editor .ProseMirror-gapcursor::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -2px;
+  width: 20px;
+  border-top: 1px solid currentColor;
+}
+
+.nm-editor.ProseMirror-focused .ProseMirror-gapcursor {
+  display: block;
+}
+
+.nm-editor.ProseMirror-hideselection *::selection {
+  background: transparent;
+}
+
+.nm-editor.ProseMirror-hideselection * {
+  caret-color: transparent;
+}
+
+/* Content. Compact, like the message the recipient will see. */
+.nm-editor p {
+  margin: 0;
+}
+
+.nm-editor ul,
+.nm-editor ol {
+  margin: 0.25em 0;
+  padding-inline-start: 1.6em;
+}
+
+.nm-editor li > p {
+  margin: 0;
+}
+
+.nm-editor blockquote {
+  margin: 0.5em 0;
+  padding-inline-start: 12px;
+  border-inline-start: 2px solid var(--nm-editor-quote, currentColor);
+  color: var(--nm-editor-muted, inherit);
+}
+
+/* Headings: a little bigger than the text, like most mail clients. */
+.nm-editor h1,
+.nm-editor h2,
+.nm-editor h3 {
+  margin: 0.6em 0 0.25em;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.nm-editor h1 {
+  font-size: 1.5em;
+}
+
+.nm-editor h2 {
+  font-size: 1.25em;
+}
+
+.nm-editor h3 {
+  font-size: 1.1em;
+}
+
+.nm-editor hr {
+  margin: 0.75em 0;
+  border: none;
+  border-top: 1px solid var(--nm-editor-quote, currentColor);
+}
+
+.nm-editor hr.ProseMirror-selectednode {
+  border-top-color: var(--nm-editor-link, Highlight);
+}
+
+.nm-editor code {
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  background: var(--nm-editor-code, transparent);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.nm-editor pre {
+  margin: 0.5em 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--nm-editor-code, transparent);
+}
+
+.nm-editor pre code {
+  padding: 0;
+  background: none;
+}
+
+/* Highlights are light colours: their text stays dark, also in dark mode
+   (the recipient sees it on a light page). */
+.nm-editor mark {
+  padding: 0 0.1em;
+  border-radius: 2px;
+  color: #1c1b29;
+}
+
+.nm-editor a {
+  color: var(--nm-editor-link, inherit);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Set apart by space and its muted colour (no rule: it read as a stray
+   stroke). The plain text keeps its "-- " line. */
+.nm-editor [data-signature] {
+  margin-top: 1.25em;
+  color: var(--nm-editor-muted, inherit);
+}
+
+.nm-editor [data-quote] {
+  margin-top: 1em;
+}
+
+/* Replies: the quoted message folded behind the "…" button (rich-text-editor). */
+.nm-quote-hidden .nm-editor [data-quote] {
+  display: none;
+}
+
+/* A quoted inline (cid:) image: its data: copy, or a placeholder chip. */
+.nm-editor .nm-inline-image {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+}
+
+.nm-editor .nm-inline-image:not([data-loaded]) {
+  padding: 0 6px;
+  border: 1px dashed var(--nm-editor-quote, currentColor);
+  border-radius: 6px;
+  color: var(--nm-editor-muted, inherit);
+  font-size: 0.85em;
+}
+
+.nm-editor .nm-inline-image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.nm-editor .nm-inline-image.ProseMirror-selectednode {
+  outline: 2px solid var(--nm-editor-link, Highlight);
+  outline-offset: 2px;
+}
+
+/* Placeholder (@tiptap/extensions), on the first paragraph while it is
+   empty and has the cursor, even with a signature or a quote below it. */
+.nm-editor > p.is-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: inline-start;
+  height: 0;
+  pointer-events: none;
+  color: var(--nm-editor-placeholder, GrayText);
+}

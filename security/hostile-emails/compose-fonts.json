@@ -1,0 +1,6 @@
+{
+  "title": "Fonts, sizes and direction that try to load something (compose editor allowlist)",
+  "attacks": ["font-family-url", "font-face-spoof", "font-shorthand-url", "var-fallback-url", "font-size-calc-attr", "escaped-font-name", "dir-attribute-injection"],
+  "references": [],
+  "expect": { "visibleText": ["Fonts in a reply", "Georgia with a src", "Font shorthand", "Escaped names", "Broken dir", "Entity quotes"] }
+}

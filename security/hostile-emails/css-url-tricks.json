@@ -1,0 +1,5 @@
+{
+  "title": "CSS url() obfuscations: var(), image-set(), cross-fade(), escapes, comments, entities",
+  "attacks": ["css-var", "image-set", "webkit-image-set", "cross-fade", "css-hex-escape", "css-char-escape", "content-url", "list-style", "cursor", "border-image", "mask", "filter-url", "image-function", "src-function", "uppercase-url", "comment-in-url", "entity-in-style", "behavior", "moz-binding", "expression", "offset-path", "clip-path"],
+  "expect": { "visibleText": ["CSS url tricks", "inline var"] }
+}

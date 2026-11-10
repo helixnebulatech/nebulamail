@@ -1,0 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# `PRAGMA foreign_keys` only works outside a transaction; up.sql and
+# down.sql open their own.
+run_in_transaction = false

@@ -1,0 +1,26 @@
+{
+  "name": "@nebulamail/jmap-client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Typed JMAP client (RFC 8620/8621). Phase 1.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./http-date": "./src/http-date.ts"
+  },
+  "scripts": {
+    "check-types": "tsrs --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@nebulamail/config": "workspace:*",
+    "tsrs": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "5.0.5"
+  }
+}

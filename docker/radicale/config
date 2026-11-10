@@ -1,0 +1,28 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Radicale for the bridge's CalDAV/CardDAV tests. Users and
+# their password come from entrypoint.sh (the Dovecot test password).
+
+[server]
+hosts = 0.0.0.0:5232, [::]:5232
+
+[auth]
+type = htpasswd
+htpasswd_filename = /tmp/radicale-users
+# Test users only, with the same password as Dovecot's (docker/README.md).
+htpasswd_encryption = plain
+delay = 1
+
+[rights]
+# Each user sees only their own calendars and address books.
+type = owner_only
+
+[storage]
+filesystem_folder = /var/lib/radicale/collections
+
+[web]
+type = none
+
+[logging]
+level = info

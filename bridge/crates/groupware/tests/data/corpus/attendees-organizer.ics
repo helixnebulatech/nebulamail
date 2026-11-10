@@ -1,0 +1,14 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Nebula Mail//corpus//ES
+BEGIN:VEVENT
+UID:nebula-corpus-attendees-organizer
+DTSTAMP:20261001T080000Z
+DTSTART;TZID=Europe/Madrid:20261106T090000
+DTEND;TZID=Europe/Madrid:20261106T100000
+SUMMARY:Planificación del trimestre
+ORGANIZER;CN=Alice:mailto:alice@nebulamail.test
+ATTENDEE;CN=Alice;ROLE=CHAIR;PARTSTAT=ACCEPTED:mailto:alice@nebulamail.test
+ATTENDEE;CN=Bob Martín;PARTSTAT=DECLINED:mailto:bob@nebulamail.test
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,20 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<html><body>
+<p>Relative URLs and odd schemes</p>
+<img src="/api/session/avatar.png" width="40" height="40">
+<img src="//attacker.example/proto-relative.png" width="40" height="40">
+<img src="image.png" width="40" height="40">
+<img src="\\attacker.example\share\x.png" width="40" height="40">
+<img src=" https://cdn.example/leading-space.png " width="40" height="40">
+<img src="blob:https://mail.example/1234" width="40" height="40">
+<img src="file:///etc/passwd" width="40" height="40">
+<img src="ftp://attacker.example/x.png" width="40" height="40">
+<img src="about:blank" width="40" height="40">
+<img src="filesystem:https://mail.example/temporary/x.png" width="40" height="40">
+<img src="ws://attacker.example/ws" width="40" height="40">
+<img src="javascript:alert(1)" width="40" height="40">
+<div style="background:url(/api/relative-css.png)">relative css</div>
+<div style="background:url(//attacker.example/proto-css.png)">proto css</div>
+<table background="../up.png"><tr><td>t</td></tr></table>
+</body></html>

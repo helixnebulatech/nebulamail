@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Tests may unwrap and index: a panic there is a failed test, not a crash.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+allow-indexing-slicing-in-tests = true
+allow-print-in-tests = true
+
+# Protocol and format names in prose, not code items. ".." keeps clippy's list.
+doc-valid-idents = ["CalDAV", "CardDAV", "WebDAV", "JSCalendar", "JSContact", "ManageSieve", ".."]

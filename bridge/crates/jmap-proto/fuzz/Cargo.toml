@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Fuzz targets for `cargo fuzz` (nightly, CI only).
+# Run from this directory: `cargo +nightly fuzz run request`.
+
+[package]
+name = "nebula-jmap-proto-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+serde_json = "1.0.154"
+nebula-jmap-proto = { path = ".." }
+
+# Standalone: not a member of the bridge workspace (needs nightly).
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "request"
+path = "fuzz_targets/request.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "strict_json"
+path = "fuzz_targets/strict_json.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "calendar_contacts"
+path = "fuzz_targets/calendar_contacts.rs"
+test = false
+doc = false
+bench = false

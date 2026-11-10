@@ -1,0 +1,42 @@
+{
+  "name": "@nebulamail/image-proxy",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Hosting-agnostic image proxy core and adapters.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./body": "./src/body.ts",
+    "./tickets": "./src/tickets/index.ts",
+    "./node": "./src/node/index.ts",
+    "./workers": "./src/workers/index.ts",
+    "./vercel": "./src/vercel/index.ts",
+    "./s3": "./src/s3/index.ts",
+    "./relay": "./src/relay/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsrs --noEmit",
+    "start": "node --import ./scripts/node-resolve-ts.ts src/node/server.ts",
+    "start:relay": "node --import ./scripts/node-resolve-ts.ts src/node/relay-server.ts",
+    "start:bun": "bun src/node/server.ts",
+    "start:deno": "sh scripts/start-deno.sh",
+    "test": "vitest run",
+    "test:bun": "EXPECT_RUNTIME=bun bun --bun vitest run",
+    "test:deno": "EXPECT_RUNTIME=deno deno run -A --node-modules-dir=manual node_modules/vitest/vitest.mjs run",
+    "serve:dev": "node --watch --import ./scripts/node-resolve-ts.ts src/node/server.ts"
+  },
+  "dependencies": {
+    "@nebulamail/mail-render": "workspace:*",
+    "@nebulamail/net-guard": "workspace:*",
+    "jsdom": "30.1.3",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@nebulamail/config": "workspace:*",
+    "@types/jsdom": "30.0.0",
+    "tsrs": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "5.0.5"
+  }
+}

@@ -1,0 +1,23 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<html><body>
+<p>Spy pixels</p>
+<img src="https://px.example/1x1.gif" width="1" height="1">
+<img src="https://px.example/0x0.gif" width="0" height="0">
+<img src="https://px.example/w1.gif" width="1">
+<img src="https://px.example/h2.gif" height="2" width="400">
+<img src="https://px.example/5x5.gif" width="5" height="5">
+<img src="https://px.example/0x5.gif" width="0" height="5">
+<img src="https://px.example/1px.gif" width="1px" height="1px">
+<img src="https://px.example/style.gif" style="width:1px;height:1px">
+<img src="https://px.example/style-important.gif" width="600" height="400" style="width: 1px !important; height: 1px !important">
+<img src="https://px.example/maxw.gif" width="600" height="400" style="max-width:1px">
+<img src="https://px.example/maxh0.gif" width="600" height="400" style="max-height:0">
+<img src="https://px.example/zero-em.gif" style="width:0em;height:10px">
+<div style="width:1px;height:1px;background:url(https://px.example/css-bg.gif)"></div>
+<img src="https://px.example/6x5.gif" width="6" height="5" alt="not a pixel: area 30">
+<img src="https://cdn.example/spacer.gif" width="1" height="1" alt="spacer exception">
+<img src="https://cdn.example/images/transparent.gif" width="1" height="20" alt="transparent exception">
+<img src="https://cdn.example/percent.png" width="1%" height="1%" alt="percent">
+<img src="https://cdn.example/normal.png" width="120" height="40" alt="normal">
+</body></html>

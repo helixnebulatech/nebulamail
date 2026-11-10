@@ -1,0 +1,15 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<html><body>
+<p>SVG</p>
+<svg width="10" height="10"><filter id="f"><feImage href="https://attacker.example/feimage.png"/><feImage xlink:href="https://attacker.example/feimage-xlink.png"/></filter><rect filter="url(#f)" width="10" height="10"/></svg>
+<svg><a><animate attributeName="href" values="javascript:alert(1)"/><text y="10">animate-href</text></a></svg>
+<svg><set attributeName="href" to="https://attacker.example/set"/></svg>
+<svg><use href="https://attacker.example/sprite.svg#icon"/><use xlink:href="//attacker.example/sprite2.svg#i"/></svg>
+<svg><image href="https://attacker.example/svg-image.png" width="10" height="10"/></svg>
+<svg><style>@import url(https://attacker.example/svg-style.css); rect{fill:url(https://attacker.example/fill.svg#p)}</style></svg>
+<svg><script href="https://attacker.example/svg-script.js"></script></svg>
+<svg><foreignObject><img src="https://attacker.example/foreign.png"></foreignObject></svg>
+<math><mi xlink:href="https://attacker.example/math">x</mi><maction actiontype="statusline">m</maction></math>
+<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIG9ubG9hZD0iYWxlcnQoMSkiLz4=" width="20" height="20">
+</body></html>

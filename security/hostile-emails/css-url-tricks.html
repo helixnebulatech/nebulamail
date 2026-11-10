@@ -1,0 +1,33 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<html><head><style>
+:root { --bg: url(https://attacker.example/var.png); --u: u; }
+.a { background: var(--bg); }
+.b { background-image: image-set("https://attacker.example/image-set-1x.png" 1x, url(https://attacker.example/image-set-2x.png) 2x); }
+.c { background-image: -webkit-image-set(url(https://attacker.example/webkit-image-set.png) 1x); }
+.d { background-image: cross-fade(url(https://attacker.example/cf1.png), url(https://attacker.example/cf2.png), 50%); }
+.e { background: \75 rl(https://attacker.example/hex-escape.png); }
+.f { background: u\rl(https://attacker.example/char-escape.png); }
+.g { content: url(https://attacker.example/content.png); }
+.h { list-style: url(https://attacker.example/list.png) inside; }
+.i { cursor: url(https://attacker.example/cursor.cur), pointer; }
+.j { border-image: url(https://attacker.example/border.png) 30; }
+.k { mask-image: url(https://attacker.example/mask.png); -webkit-mask: url(https://attacker.example/wmask.png); }
+.l { filter: url(https://attacker.example/filter.svg#f); }
+.m { background: image("https://attacker.example/image-fn.png"); }
+.n { background: src("https://attacker.example/src-fn.png"); }
+.o { background: URL( "https://attacker.example/upper.png" ); }
+.p { background: url(/*c*/https://attacker.example/comment.png); }
+.q { background: u/**/rl(https://attacker.example/split-by-comment.png); }
+.r { background: url(&#104;ttps://attacker.example/entity-in-style-element.png); }
+.s { behavior: url(https://attacker.example/x.htc); -moz-binding: url(https://attacker.example/x.xml#b); }
+.t { background: expression(alert(1)); }
+.u { offset-path: url(https://attacker.example/path.svg#p); shape-outside: url(https://attacker.example/shape.png); clip-path: url(https://attacker.example/clip.svg#c); }
+</style></head><body>
+<p class="a b c d e f g h i j k l m n o p q r s t u">CSS url tricks</p>
+<div style="background:&#117;rl(https://attacker.example/entity-attr.png)">entity attr</div>
+<div style="background:url&lpar;https://attacker.example/lpar.png)">lpar</div>
+<div style="background-image:url('https://attacker.example/q1.png'), url(&quot;https://attacker.example/q2.png&quot;)">quotes</div>
+<div style="--x:url(https://attacker.example/inline-var.png);background:var(--x)">inline var</div>
+<div style="background:url(https://attacker.example/a.png&#x29;;x:url(https://attacker.example/b.png)">paren entity</div>
+</body></html>

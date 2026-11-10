@@ -1,0 +1,77 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Example Cloudflare Workers config for the image proxy (README, "Cloudflare
+# Workers"). Copy it to wrangler.toml and fill in your names. Not deployed by
+# this repo.
+
+name = "nebula-image-proxy"
+main = "src/workers/worker.ts"
+compatibility_date = "2026-10-01"
+
+# Serve it from its own hostname, never the app's. Best a
+# dedicated zone or workers.dev: Workers send `CF-Worker: <zone>` on every
+# image download, so the sender sees the zone name (never the user's IP).
+workers_dev = true
+# No per-version preview URLs: each one is another public copy of the proxy.
+preview_urls = false
+# routes = [{ pattern = "img.example.com", custom_domain = true }]
+
+[vars]
+APP_URL = "https://mail.example.com"
+# IMAGE_CACHE_TTL_DAYS = "30"   # whole days, from 1, no maximum
+# IMAGE_PROXY_DOH_URL = "https://cloudflare-dns.com/dns-query"
+
+# Secret, shared with the BFF: `wrangler secret put IMAGE_PROXY_KEYS`.
+# Never put it in this file.
+
+# Cache mode (optional). Without this binding (or the S3 variables below)
+# only batch mode works. Also add a lifecycle rule as a second net, with the
+# same number of days as IMAGE_CACHE_TTL_DAYS:
+#   wrangler r2 bucket lifecycle add nebula-image-cache --prefix img/ --expire-days 30
+[[r2_buckets]]
+binding = "IMAGE_CACHE_BUCKET"
+bucket_name = "nebula-image-cache"
+
+# Or any S3-compatible storage instead of R2 (not both). The endpoint must
+# be reachable from Cloudflare (a public https endpoint):
+# IMAGE_CACHE_S3_ENDPOINT = "https://s3.eu-west-1.amazonaws.com"
+# IMAGE_CACHE_S3_BUCKET = "nebula-image-cache"
+# IMAGE_CACHE_S3_REGION = "eu-west-1"
+# IMAGE_CACHE_S3_URL_STYLE = "virtual"   # "path" (default) or "virtual"
+# Secrets: `wrangler secret put IMAGE_CACHE_S3_ACCESS_KEY_ID` and
+# `wrangler secret put IMAGE_CACHE_S3_SECRET_ACCESS_KEY`.
+
+# Rate limiting with Cloudflare's Rate Limiting binding
+# (no Redis). One binding per rule; the names are fixed, the numbers are
+# yours. `period` is 10 or 60 seconds. `namespace_id` is any number unique in
+# your account. Counts are per Cloudflare location and approximate (Cloudflare's
+# docs). A rule without a binding falls back to an in-memory limit per isolate.
+[[ratelimits]]
+name = "RATE_LIMIT_BATCH_IP" # POST /batch per client IP (IPv6 by /64)
+namespace_id = "41001"
+simple = { limit = 30, period = 60 }
+
+[[ratelimits]]
+name = "RATE_LIMIT_BATCH_ACCOUNT" # POST /batch per mail account
+namespace_id = "41002"
+simple = { limit = 60, period = 60 }
+
+[[ratelimits]]
+name = "RATE_LIMIT_BATCH_GLOBAL" # POST /batch, everybody together
+namespace_id = "41003"
+simple = { limit = 1200, period = 60 }
+
+[[ratelimits]]
+name = "RATE_LIMIT_IMAGE_IP" # GET /i/<ticket> per client IP
+namespace_id = "41004"
+simple = { limit = 1200, period = 60 }
+
+[[ratelimits]]
+name = "RATE_LIMIT_IMAGE_GLOBAL" # GET /i/<ticket>, everybody together
+namespace_id = "41005"
+simple = { limit = 60000, period = 60 }
+
+# Deletes expired cache entries every hour (no-op without storage).
+[triggers]
+crons = ["17 * * * *"]

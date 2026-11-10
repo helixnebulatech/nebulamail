@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+[package]
+name = "nebula-imap-proto"
+description = "Typed IMAP client commands and responses, without I/O"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license = "MIT OR Apache-2.0"
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+imap-proto.workspace = true
+base64.workspace = true
+secrecy.workspace = true
+zeroize.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

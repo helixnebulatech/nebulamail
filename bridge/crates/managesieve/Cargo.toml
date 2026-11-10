@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[package]
+name = "nebula-managesieve"
+description = "ManageSieve client (RFC 5804): TLS, SASL, typestate connection, limits"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+nebula-managesieve-proto.workspace = true
+nebula-tls.workspace = true
+net-guard.workspace = true
+getrandom.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["net", "io-util", "time", "macros"] }
+tokio-rustls.workspace = true
+rustls.workspace = true
+rustls-pki-types.workspace = true
+secrecy.workspace = true
+tracing.workspace = true
+zeroize.workspace = true
+
+[dev-dependencies]
+nebula-tests.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "net", "io-util", "time"] }
+rustls.workspace = true
+tokio-rustls.workspace = true
+
+[lints]
+workspace = true

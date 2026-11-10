@@ -1,0 +1,7 @@
+{
+  "title": "Mutation XSS and namespace confusion (DOMPurify bypass classics)",
+  "attacks": ["mxss-mglyph", "noscript-attribute", "svg-style-breakout", "nested-form-math", "template", "comment-confusion", "style-breakout-escape", "xmp", "textarea", "title"],
+  "references": ["https://research.securitum.com/dompurify-bypass-using-mxss/", "https://mizu.re/post/exploring-the-dompurify-library-bypasses-and-fixes"],
+  "note": "The nested form/math vector makes the parser swallow the rest of the document into a foreign <style>; losing that content is expected.",
+  "expect": { "visibleText": ["Mutation XSS"] }
+}

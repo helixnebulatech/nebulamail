@@ -1,0 +1,63 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# DEVELOPMENT ONLY: the bridge against the local Stalwart in Docker
+# (docker/compose.yaml), over IMAP and SMTP.
+#
+#   cd bridge
+#   cargo run -p nebula-bridge -- gen-master-key > dev/master.key
+#   cargo run -p nebula-bridge -- serve --config dev/dev.toml
+#
+# Then point the web app at it: JMAP_SERVER=http://localhost:8090,
+# OAUTH_CLIENT_ID=nebula-dev, OAUTH_CLIENT_SECRET=nebula-dev-bridge-secret.
+# That secret is public (it is in this file): never use it anywhere else.
+
+[server]
+listen = "127.0.0.1:8090"
+public_url = "http://localhost:8090"
+app_origins = ["http://localhost:3001"]
+
+[store]
+path = "bridge.db"
+
+[secrets]
+master_key_file = "master.key"
+
+[[oauth.clients]]
+id = "nebula-dev"
+# argon2id of "nebula-dev-bridge-secret" (development only).
+secret_hash = "$argon2id$v=19$m=19456,t=2,p=1$kiNCtYzYa8B0ksXw383Jzg$/3RUeVgqm5mXuEuRcVRlOMxNERXy6XYOwpKv6jC+Ur0"
+redirect_uris = ["http://localhost:3001/auth/callback"]
+
+[upstream]
+# Stalwart runs on this machine.
+private_network = true
+sent_copy = "append"
+# Stalwart's test users log in as "alice" and "bob".
+email_domain = "nebulamail.test"
+
+[upstream.imap]
+host = "127.0.0.1"
+port = 1993
+tls = "implicit"
+# Stalwart's self-signed certificate; only allowed for loopback.
+tls_verify = false
+
+[upstream.smtp]
+host = "127.0.0.1"
+port = 1465
+tls = "implicit"
+tls_verify = false
+
+# Stalwart's own CalDAV/CardDAV on its HTTP port (plain HTTP, loopback
+# only). It announces calendar-auto-schedule, so it sends invitations.
+[upstream.dav]
+url = "http://127.0.0.1:8080/"
+
+# Stalwart's ManageSieve (STARTTLS on 4190). Stalwart's own JMAP has Sieve
+# too; this is for testing the bridge's ManageSieve side.
+[upstream.sieve]
+
+# Web Push to the browsers' real push services (bridge.example.toml).
+[push]
+contact = "mailto:admin@nebulamail.test"

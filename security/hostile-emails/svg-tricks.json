@@ -1,0 +1,6 @@
+{
+  "title": "SVG feImage, animate/set href, use, image, foreignObject (2026 Roundcube bypasses)",
+  "attacks": ["svg-feimage", "svg-animate-href", "svg-set-href", "svg-use-external", "svg-image", "svg-style-import", "svg-script", "foreignobject", "mathml", "data-svg-image"],
+  "references": ["https://github.com/roundcube/roundcubemail/security/advisories"],
+  "expect": { "visibleText": ["SVG"] }
+}

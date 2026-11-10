@@ -1,0 +1,203 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Signed releases: on a tag `v<version>`, build the static zip
+# and the bridge (static musl binaries for x86_64 and aarch64), make their
+# SBOMs and SHA256SUMS, sign every file keylessly with Sigstore (cosign,
+# this workflow's GitHub OIDC identity) and attest their build provenance
+# (SLSA), then open a *draft* release with all of it for a maintainer to
+# publish. The build steps are scripts in scripts/release/, so they run the
+# same way on a laptop (`scripts/release/*.sh`, see each one).
+#
+# Only the last two jobs get more than read access, and only what they
+# need: `sign` an OIDC token and attestations, `publish` the release.
+# Nothing here uses a stored secret.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Version matches the tag
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: check
+        env:
+          TAG: ${{ github.ref_name }}
+        run: echo "version=$(scripts/release/check-version.sh "$TAG")" >> "$GITHUB_OUTPUT"
+
+  static:
+    name: Static zip
+    needs: version
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    # The build needs the app's config to exist; none of it ends in the zip.
+    env:
+      APP_URL: https://mail.example.com
+      JMAP_SERVER: https://jmap.example.com
+      OAUTH_CLIENT_ID: release
+      OAUTH_CLIENT_SECRET: release-placeholder-not-a-secret
+      SESSION_KEYS: "1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      # A known nonce, so anyone can rebuild the same zip from the tag and
+      # compare its SHA-256 (docs/static.md: it only allows adding CSS).
+      # Built twice: the two must be equal.
+      - name: Build, reproducible
+        working-directory: apps/web
+        run: |
+          # Letters, digits, `-` and `_` only: 1.2.3 → nebula-mail-1-2-3.
+          NEBULA_STYLE_NONCE="nebula-mail-$(printf %s "$VERSION" | tr . -)"
+          export NEBULA_STYLE_NONCE
+          bun run build:static
+          cp dist-static/nebula-mail-static.zip.sha256 "$RUNNER_TEMP/first.sha256"
+          bun run build:static
+          diff "$RUNNER_TEMP/first.sha256" dist-static/nebula-mail-static.zip.sha256
+          mkdir -p ../../dist-release
+          cp dist-static/nebula-mail-static.zip "../../dist-release/nebula-mail-static-$VERSION.zip"
+      - name: SBOMs
+        run: scripts/release/sbom.sh "$VERSION" dist-release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-static
+          path: dist-release/
+          if-no-files-found: error
+
+  bridge:
+    name: Bridge (${{ matrix.arch }}, musl)
+    needs: version
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { arch: x86_64, runner: ubuntu-24.04 }
+          - { arch: aarch64, runner: ubuntu-24.04-arm }
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      # rust:1.98.1-alpine (rust-toolchain.toml), multi-arch index. Run with
+      # `docker run`, not as the job's container: JavaScript actions such
+      # as checkout don't run in Alpine.
+      RUST_IMAGE: rust:1.98.1-alpine@sha256:7cc1c22d77d9432f7fe012a70e6d3e555af54c2a6832700ed7d553f1769ae89f
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build
+        run: |
+          SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          export SOURCE_DATE_EPOCH
+          docker run --rm -e SOURCE_DATE_EPOCH -v "$PWD:/src" -w /src "$RUST_IMAGE" \
+            sh scripts/release/build-bridge.sh "$VERSION" dist-release
+          sudo chown -R "$(id -u):$(id -g)" dist-release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-bridge-${{ matrix.arch }}
+          path: dist-release/
+          if-no-files-found: error
+
+  sign:
+    name: Checksums, signatures and provenance
+    needs: [version, static, bridge]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      # Sigstore's keyless signing and the attestations use the job's OIDC
+      # token; the attestations are stored in this repository.
+      id-token: write
+      attestations: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: release-*
+          path: dist-release
+          merge-multiple: true
+      - name: SHA256SUMS
+        working-directory: dist-release
+        run: |
+          ls -l
+          test -f "nebula-mail-static-$VERSION.zip"
+          test -f "nebula-bridge-$VERSION-x86_64-linux-musl.tar.gz"
+          test -f "nebula-bridge-$VERSION-aarch64-linux-musl.tar.gz"
+          sha256sum -- * > SHA256SUMS
+          cat SHA256SUMS
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.4
+      # One Sigstore bundle per file (certificate, signature and the Rekor
+      # entry), checked right away as a user would.
+      - name: Sign
+        working-directory: dist-release
+        env:
+          IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/release.yml@${{ github.ref }}
+        run: |
+          for file in *; do
+            cosign sign-blob --yes --bundle "$file.sigstore.json" "$file"
+            cosign verify-blob --bundle "$file.sigstore.json" \
+              --certificate-identity "$IDENTITY" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              "$file"
+          done
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-checksums: dist-release/SHA256SUMS
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: signed
+          path: dist-release/
+          if-no-files-found: error
+
+  publish:
+    name: Draft release
+    needs: [version, sign]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: signed
+          path: dist-release
+      # A draft: a maintainer reads it and publishes it by hand. A version
+      # with a suffix (1.2.3-rc.1) is a pre-release.
+      - run: |
+          scripts/release/notes.sh "$VERSION" "$GH_REPO" > "$RUNNER_TEMP/notes.md"
+          set -- --draft --verify-tag --title "Nebula Mail $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+          case "$VERSION" in *-*) set -- "$@" --prerelease ;; esac
+          gh release create "$TAG" "$@" dist-release/*

@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+[package]
+name = "nebula-managesieve-proto"
+description = "Typed ManageSieve (RFC 5804) commands and responses, without I/O"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license = "MIT OR Apache-2.0"
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+base64.workspace = true
+thiserror.workspace = true
+zeroize.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

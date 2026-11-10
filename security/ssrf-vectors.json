@@ -1,0 +1,602 @@
+{
+  "$comment": "Shared SSRF test vectors. Used by packages/net-guard (TS), bridge/crates/net-guard (Rust) and every image-proxy adapter.",
+  "version": 1,
+  "publicIp": "93.184.215.14",
+  "url": [
+    {
+      "id": "ok-https",
+      "input": "https://images.example.com/a.png",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "allow"
+    },
+    {
+      "id": "ok-http",
+      "input": "http://images.example.com/a.png",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "allow"
+    },
+    {
+      "id": "ok-ipv6-global",
+      "input": "https://images.example.com/a.png",
+      "dns": { "AAAA": ["2606:2800:21f:cb07:6820:80da:af6b:8b2c"] },
+      "expect": "allow"
+    },
+
+    {
+      "id": "scheme-file",
+      "input": "file:///etc/passwd",
+      "expect": "block",
+      "reason": "scheme"
+    },
+    {
+      "id": "scheme-ftp",
+      "input": "ftp://example.com/a.png",
+      "expect": "block",
+      "reason": "scheme"
+    },
+    {
+      "id": "scheme-gopher",
+      "input": "gopher://127.0.0.1:6379/_INFO",
+      "expect": "block",
+      "reason": "scheme"
+    },
+    {
+      "id": "scheme-data",
+      "input": "data:image/png;base64,AAAA",
+      "expect": "block",
+      "reason": "scheme"
+    },
+    {
+      "id": "scheme-javascript",
+      "input": "javascript:alert(1)",
+      "expect": "block",
+      "reason": "scheme"
+    },
+    {
+      "id": "userinfo",
+      "input": "http://user:pass@images.example.com/a.png",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "block",
+      "reason": "userinfo"
+    },
+    {
+      "id": "userinfo-confusion",
+      "input": "http://images.example.com@127.0.0.1/a.png",
+      "expect": "block",
+      "reason": "userinfo"
+    },
+    {
+      "id": "port-8080",
+      "input": "http://images.example.com:8080/a.png",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "block",
+      "reason": "port"
+    },
+    {
+      "id": "port-22",
+      "input": "http://images.example.com:22/",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "block",
+      "reason": "port"
+    },
+    {
+      "id": "port-explicit-443",
+      "input": "https://images.example.com:443/a.png",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "allow"
+    },
+
+    {
+      "id": "v4-loopback",
+      "input": "http://127.0.0.1/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-decimal",
+      "input": "http://2130706433/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-hex",
+      "input": "http://0x7f.1/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-octal",
+      "input": "http://0177.0.0.1/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-short",
+      "input": "http://127.1/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-zero",
+      "input": "http://0.0.0.0/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-zero-short",
+      "input": "http://0/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-unicode-dots",
+      "input": "http://127。0。0。1/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-metadata",
+      "input": "http://169.254.169.254/latest/meta-data/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-rfc1918-10",
+      "input": "http://10.0.0.1/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-rfc1918-172",
+      "input": "http://172.16.5.4/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-rfc1918-192",
+      "input": "http://192.168.1.1/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-cgnat",
+      "input": "http://100.64.0.1/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-benchmark",
+      "input": "http://198.18.0.1/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-test-net",
+      "input": "http://203.0.113.5/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-multicast",
+      "input": "http://224.0.0.1/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-reserved",
+      "input": "http://240.0.0.1/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-broadcast",
+      "input": "http://255.255.255.255/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-this-network-nonzero",
+      "input": "http://0.1.2.3/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-ietf-protocol",
+      "input": "http://192.0.0.170/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-6to4-relay",
+      "input": "http://192.88.99.1/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-benchmark-end",
+      "input": "http://198.19.255.254/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-cgnat-end",
+      "input": "http://100.127.255.254/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-rfc1918-172-end",
+      "input": "http://172.31.255.254/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v4-after-cgnat",
+      "input": "http://100.128.0.1/",
+      "expect": "allow"
+    },
+    {
+      "id": "v4-after-rfc1918-172",
+      "input": "http://172.32.0.1/",
+      "expect": "allow"
+    },
+
+    {
+      "id": "v6-loopback",
+      "input": "http://[::1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-unspecified",
+      "input": "http://[::]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-mapped-v4",
+      "input": "http://[::ffff:127.0.0.1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-mapped-v4-hex",
+      "input": "http://[::ffff:7f00:1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-compat-v4",
+      "input": "http://[::127.0.0.1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-nat64",
+      "input": "http://[64:ff9b::7f00:1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-nat64-local",
+      "input": "http://[64:ff9b:1::a00:1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-6to4",
+      "input": "http://[2002:7f00:1::]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-teredo",
+      "input": "http://[2001:0:4136:e378:8000:63bf:3fff:fdd2]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-ula",
+      "input": "http://[fd00::1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-link-local",
+      "input": "http://[fe80::1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-site-local",
+      "input": "http://[fec0::1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-multicast",
+      "input": "http://[ff02::1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-doc",
+      "input": "http://[2001:db8::1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-discard",
+      "input": "http://[100::1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-mapped-v4-hex-zero",
+      "input": "http://[::ffff:0:7f00:1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-6to4-rfc1918",
+      "input": "http://[2002:a00:1::]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-nat64-link-local",
+      "input": "http://[64:ff9b::a9fe:a9fe]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-unassigned-5f00",
+      "input": "http://[5f00::1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-orchid-v2",
+      "input": "http://[2001:20::1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-benchmark",
+      "input": "http://[2001:2::1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-doc-3fff",
+      "input": "http://[3fff::1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-outside-global-unicast",
+      "input": "http://[4000::1]/",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "v6-nat64-public",
+      "input": "http://[64:ff9b::5db8:d70e]/",
+      "expect": "allow"
+    },
+
+    {
+      "id": "host-localhost",
+      "input": "http://localhost/",
+      "dns": { "A": ["127.0.0.1"], "AAAA": ["::1"] },
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "host-localhost-dot",
+      "input": "http://localhost./",
+      "dns": { "A": ["127.0.0.1"] },
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "host-metadata-gcp",
+      "input": "http://metadata.google.internal/",
+      "dns": { "A": ["169.254.169.254"] },
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "host-localhost-upper",
+      "input": "http://LOCALHOST/",
+      "dns": { "A": ["127.0.0.1"] },
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "host-localhost-subdomain-dot",
+      "input": "http://x.localhost./",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "host-single-label",
+      "input": "http://intranet/",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "host-internal-public-ip",
+      "input": "http://grafana.internal/",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "host-onion",
+      "input": "http://abc.onion/",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "host-mdns-local",
+      "input": "http://printer.local/",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "host-mdns-local-dot-upper",
+      "input": "http://Foo.LOCAL./",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "host-home-arpa",
+      "input": "http://nas.home.arpa/",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "host-public-lookalike",
+      "input": "https://local.internal-tools.example.com/a.png",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "allow"
+    },
+    {
+      "id": "host-public-trailing-dot",
+      "input": "https://images.example.com./a.png",
+      "dns": { "A": ["93.184.215.14"] },
+      "expect": "allow"
+    },
+    {
+      "id": "host-nip-io",
+      "input": "http://127.0.0.1.nip.io/",
+      "dns": { "A": ["127.0.0.1"] },
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "host-localtest-me",
+      "input": "http://localtest.me/",
+      "dns": { "A": ["127.0.0.1"] },
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "dns-mixed",
+      "input": "http://mixed.example.com/",
+      "dns": { "A": ["93.184.215.14", "10.0.0.1"] },
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "dns-aaaa-private-only",
+      "input": "http://v6only.example.com/",
+      "dns": { "AAAA": ["fd00::1"] },
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "dns-a-public-aaaa-private",
+      "input": "http://dual.example.com/",
+      "dns": { "A": ["93.184.215.14"], "AAAA": ["::1"] },
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "dns-6to4-loopback-in-aaaa",
+      "input": "http://six-to-four.example.com/",
+      "dns": { "AAAA": ["2002:7f00:1::"] },
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "dns-nat64-private-in-aaaa",
+      "input": "http://nat64.example.com/",
+      "dns": { "AAAA": ["64:ff9b::a00:1"] },
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "dns-empty",
+      "input": "http://nxdomain.example.com/",
+      "dns": {},
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "dns-mapped-in-aaaa",
+      "input": "http://sneaky.example.com/",
+      "dns": { "AAAA": ["::ffff:10.0.0.1"] },
+      "expect": "block",
+      "reason": "private-ip"
+    }
+  ],
+  "fetch": [
+    {
+      "id": "rebinding",
+      "description": "First resolution public, second private: the connection must use the first validated IP.",
+      "dnsSequence": [["93.184.215.14"], ["127.0.0.1"]],
+      "expect": "connect-to-validated-ip"
+    },
+    {
+      "id": "redirect-to-private",
+      "description": "302 from a public host to http://127.0.0.1/.",
+      "expect": "block",
+      "reason": "private-ip"
+    },
+    {
+      "id": "redirect-to-metadata-name",
+      "description": "302 to http://metadata.google.internal/: refused by name (.internal) before resolving.",
+      "expect": "block",
+      "reason": "dns"
+    },
+    {
+      "id": "redirect-scheme-change",
+      "description": "302 to file:///etc/passwd or gopher://.",
+      "expect": "block",
+      "reason": "scheme"
+    },
+    {
+      "id": "redirect-loop",
+      "description": "More than 5 redirects.",
+      "expect": "block",
+      "reason": "too-many-redirects"
+    },
+    {
+      "id": "not-an-image",
+      "description": "200 with text/html, or image/svg+xml, or magic bytes that do not match the content type.",
+      "expect": "block",
+      "reason": "content-type"
+    },
+    {
+      "id": "too-large",
+      "description": "Body bigger than 5 MB (with and without Content-Length).",
+      "expect": "block",
+      "reason": "size"
+    },
+    {
+      "id": "gzip-bomb",
+      "description": "Small compressed body that expands beyond the decompressed limit.",
+      "expect": "block",
+      "reason": "size"
+    },
+    {
+      "id": "slow-loris",
+      "description": "Server sends one byte per second.",
+      "expect": "block",
+      "reason": "timeout"
+    },
+    {
+      "id": "env-proxy-ignored",
+      "description": "HTTP_PROXY/HTTPS_PROXY set in the environment must not be used.",
+      "expect": "direct-connection"
+    }
+  ]
+}

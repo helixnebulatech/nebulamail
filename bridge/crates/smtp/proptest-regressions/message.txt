@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 7faa7e8950b2a0861bf59d90dc32ae8f0867ffee7a34ef6b46300e20d78880e3 # shrinks to headers = ["Bcc: x@y"], crlf = false
+cc 687f3a2d84ae1dee9a0b408ca38c7a96a3b86d7c1f43de093526544fbc19eee0 # shrinks to headers = [], crlf = false

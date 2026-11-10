@@ -1,0 +1,5 @@
+{
+  "title": "Full-screen overlays (phishing)",
+  "attacks": ["position-fixed", "position-absolute", "escaped-position", "sticky", "percentage-height", "popover", "dialog"],
+  "expect": { "visibleText": ["Real content"], "forbiddenCss": ["position:fixed", "position: fixed", "position:absolute", "position: absolute"] }
+}

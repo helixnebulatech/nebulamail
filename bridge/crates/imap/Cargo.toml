@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[package]
+name = "nebula-imap"
+description = "IMAP client: TLS, typestate connection, limits, IDLE"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+nebula-imap-proto.workspace = true
+nebula-tls.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["net", "io-util", "time", "macros"] }
+tokio-rustls.workspace = true
+rustls.workspace = true
+rustls-pki-types.workspace = true
+secrecy.workspace = true
+subtle.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+nebula-tests.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "net", "io-util", "time"] }
+
+[lints]
+workspace = true

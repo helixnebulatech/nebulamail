@@ -1,0 +1,6 @@
+{
+  "title": "A frameset document: the sanitizer leaves no body",
+  "attacks": ["frameset-no-body", "frame-src", "noframes"],
+  "note": "DOMPurify drops the leading <frameset>, so the sanitized document has no body: the email must fall back to text instead of throwing.",
+  "expect": { "view": "text" }
+}

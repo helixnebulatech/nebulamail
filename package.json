@@ -1,0 +1,55 @@
+{
+  "name": "nebulamail",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "zod": "4.6.7",
+      "typescript": "7.0.2",
+      "tsrs": "0.18.0-ts7.1.0-dev.20260929",
+      "varlock": "1.23.0"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "check-types": "turbo run check-types",
+    "dev:web": "turbo run dev -F web --",
+    "dev:setup": "bun docker/setup.ts",
+    "dev:seed-load": "bun docker/seed-load-test.ts",
+    "dev:index-race": "bun docker/stalwart-index-race.ts",
+    "dev:querychanges-threads": "bun docker/stalwart-querychanges-threads.ts",
+    "dev:memory-503": "bun docker/stalwart-memory-503.ts",
+    "dev:share": "bun docker/setup-sharing.ts",
+    "dev:seed-calendar": "bun docker/seed-calendar.ts",
+    "env:generate": "varlock codegen --path ./apps/web/",
+    "postinstall": "varlock codegen --path ./apps/web/",
+    "check": "ultracite check",
+    "test": "turbo run test",
+    "fix": "ultracite fix",
+    "dev:proxy": "cd packages/image-proxy && IMAGE_CACHE_DIR=${IMAGE_CACHE_DIR:-/tmp/nebula-image-cache} node --env-file=../../apps/web/.env.local --watch --import ./scripts/node-resolve-ts.ts src/node/server.ts",
+    "dev:proxy:bun": "cd packages/image-proxy && IMAGE_CACHE_DIR=${IMAGE_CACHE_DIR:-/tmp/nebula-image-cache} bun --env-file=../../apps/web/.env.local --watch src/node/server.ts",
+    "dev:proxy:deno": "cd packages/image-proxy && IMAGE_CACHE_DIR=${IMAGE_CACHE_DIR:-/tmp/nebula-image-cache} sh scripts/start-deno.sh --env-file=../../apps/web/.env.local --watch"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@nebulamail/config": "workspace:*",
+    "@types/node": "26.6.5",
+    "oxfmt": "0.74.0",
+    "oxlint": "1.89.0",
+    "oxlint-tsgolint": "7.0.2005",
+    "tsrs": "catalog:",
+    "turbo": "2.11.10",
+    "typescript": "catalog:",
+    "ultracite": "8.0.2",
+    "varlock": "catalog:"
+  },
+  "packageManager": "bun@1.4.3"
+}

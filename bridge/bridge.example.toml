@@ -1,0 +1,252 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Nebula Mail bridge: example configuration.
+#
+#   nebula-bridge serve --config /etc/nebula-bridge/bridge.toml
+#
+# Relative paths are relative to this file's directory. Unknown keys are an
+# error, so typos don't go unnoticed.
+
+[server]
+# Address and port to listen on. Put a reverse proxy with TLS in front, or
+# expose it directly only on a trusted network.
+listen = "127.0.0.1:8080"
+# The public URL of the bridge: an origin only (no path). It is the OAuth
+# issuer and the base of every JMAP URL. Set the web app's JMAP_SERVER to
+# exactly this value. https is required (http only for localhost).
+public_url = "https://jmap.example.com"
+# Origins of the web app, allowed to call JMAP from the browser (CORS).
+# Never "*".
+app_origins = ["https://mail.example.com"]
+# Where the client IP for login rate limits comes from: "peer" (the TCP
+# connection) or "x-forwarded-for" (the last address in that header).
+# Required with an https public_url: the bridge speaks only plain HTTP, so
+# there is always a TLS proxy in front, and "x-forwarded-for" is right if it
+# sets that header (otherwise anyone could pretend to be any IP). "peer" only
+# fits clients that connect directly (http on localhost), or a proxy without
+# the header, accepting that every client then shares the login limits.
+client_ip = "x-forwarded-for"
+
+[store]
+# SQLite database: accounts, sealed passwords, token hashes, change log,
+# and in clear the mail metadata cache (subjects, senders, previews, headers)
+# and uploads until they expire. Keep it readable only by the bridge (chmod
+# 600, directory 700); the bridge creates it with 0600 and warns otherwise.
+path = "/var/lib/nebula-bridge/bridge.db"
+
+[secrets]
+# The master key (KEK) that wraps every account's data key. 32 random bytes
+# in base64, made with `nebula-bridge gen-master-key`. Keep the file
+# readable only by the bridge (chmod 600) and back it up: without it the
+# stored passwords can't be decrypted (users only have to log in again).
+master_key_file = "/etc/nebula-bridge/master.key"
+#
+# Instead of a file, the environment variable NEBULA_BRIDGE_MASTER_KEY can
+# hold the key in base64 (or "1:base64,2:base64" for several). Use one or
+# the other, not both.
+#
+# Rotation: list several keys with versions instead of master_key_file. The
+# highest version wraps new keys; older ones still open what they wrapped.
+# At start the bridge wraps every account key again with the highest one
+# and logs when the older keys are no longer needed (then remove them).
+# `nebula-bridge rewrap-keys --config <file>` does the same without serving.
+# [[secrets.keys]]
+# version = 1
+# file = "/etc/nebula-bridge/master-1.key"
+# [[secrets.keys]]
+# version = 2
+# file = "/etc/nebula-bridge/master-2.key"
+
+# OAuth clients: the web app's server (BFF). Fixed here, no dynamic
+# registration. Make a secret and its hash with
+#   nebula-bridge hash-secret < /dev/null
+# then put the secret in the web app (OAUTH_CLIENT_SECRET) and the hash
+# here. Only the hash is stored.
+[[oauth.clients]]
+id = "nebulamail"
+# Placeholder: replace it with the output of hash-secret.
+secret_hash = "$argon2id$v=19$m=19456,t=2,p=1$c2FsdHNhbHRzYWx0$aGFzaGhhc2hoYXNoaGFzaGhhc2hoYXNoaGFzaGhhc2g"
+# Exact redirect URIs (the web app's APP_URL + /auth/callback).
+redirect_uris = ["https://mail.example.com/auth/callback"]
+
+# The mail server users log in to. Their login and password are checked
+# with an IMAP login; the same credentials are used for SMTP.
+[upstream]
+# Allow mail servers on private addresses (a Dovecot at home). Without it,
+# a private IP is refused, which protects you if DNS changes.
+private_network = false
+# Who saves sent mail in the Sent folder: "append" (the bridge, with IMAP
+# APPEND) or "server" (servers that do it themselves, like Gmail).
+sent_copy = "append"
+# Domain added to logins without "@" to make the user's address (and their
+# sending identity): "alice" → "alice@example.com". Leave it out if users
+# log in with their full address.
+# email_domain = "example.com"
+
+[upstream.imap]
+host = "imap.example.com"
+# Default: 993 for "implicit", 143 for "starttls".
+port = 993
+# "implicit" (TLS from the start) or "starttls" (required: if the server
+# doesn't offer it, the bridge doesn't connect).
+tls = "implicit"
+# Check the server certificate. `false` is only accepted for loopback hosts
+# (a development server with a self-signed certificate).
+tls_verify = true
+
+[upstream.smtp]
+host = "smtp.example.com"
+# Default: 465 for "implicit", 587 for "starttls". Both are safe; implicit
+# TLS is still preferred (RFC 8314).
+port = 465
+tls = "implicit"
+tls_verify = true
+
+# Optional: Sieve filters and the vacation response through ManageSieve
+# (RFC 5804; Dovecot's Pigeonhole, Stalwart, Cyrus…), with the same login
+# and password as IMAP. Without this section the web app hides Filters and
+# the vacation response. The capability is announced to a user once the
+# server took their login. Always over TLS: STARTTLS (required, by default)
+# or implicit TLS. Details: docs/bridge.md.
+# [upstream.sieve]
+# Default: the IMAP host (and then its tls_verify).
+# host = "imap.example.com"
+# port = 4190
+# tls = "starttls"
+# tls_verify = true
+# Largest script in bytes (1024 to 16777216; default 1 MiB).
+# max_script_size = 1048576
+# Most scripts per user, `vacation` included (1 to 1000; default 100). Every
+# filter or vacation request reads each script once, so a user with more
+# scripts (made with another client) gets "server unavailable" until some are
+# deleted or this is raised.
+# max_scripts = 100
+# ManageSieve can't announce changes: while a user has the app open, their
+# scripts are read this often (a login each time; 15 to 3600).
+# poll_seconds = 60
+
+# Optional: calendars and contacts from a CalDAV/CardDAV server (Radicale,
+# Baïkal, Nextcloud, Stalwart…), with the same login and password as IMAP.
+# Without this section the web app hides Calendar and Contacts. If the DAV
+# server refuses a user's password, only their calendars and contacts are
+# turned off (mail keeps working) until they sign in again. A user whose
+# DAV account has no calendar or no address book gets one of each when
+# signing in. Servers tested, what works and the security rules:
+# docs/bridge.md.
+# [upstream.dav]
+# Where discovery starts (/.well-known/caldav and /.well-known/carddav are
+# tried too). https; http only for loopback (development).
+# url = "https://dav.example.com/"
+# Optional: address books on another server than calendars (Fastmail:
+# url = "https://caldav.fastmail.com/", contacts_url =
+# "https://carddav.fastmail.com/"). It gets the same login and password as
+# `url`; address books are then only taken from it, calendars only from
+# `url`. Same rules as `url`.
+# contacts_url = "https://carddav.example.com/"
+# What to sync.
+# calendars = true
+# contacts = true
+# Check the server certificate. `false` is only accepted for loopback hosts.
+# tls_verify = true
+# Other origins the server may send the bridge to (redirects, homes on
+# another host), as "https://host[:port]". The password is never sent
+# there. `upstream.private_network` applies to them too.
+# allowed_hosts = []
+# Who sends invitations: "auto" (the server if it announces
+# calendar-auto-schedule, else the bridge by SMTP), "bridge" or "server".
+# scheduling = "auto"
+# How often each signed-in account is synced: with the app open (a push
+# connection), and without it.
+# poll_seconds = 60
+# poll_idle_seconds = 300
+
+# Calendar reminders (optional; these are the defaults). docs/bridge.md.
+# [upstream.dav.alerts]
+# No reminders at all (open app or Web Push) with false.
+# enabled = true
+# How late a reminder may still be sent (1 to 1440); also how long a push
+# service keeps it for an offline browser.
+# grace_minutes = 10
+# How long before an event its reminders may ring (1 to 366).
+# lead_days = 8
+# How far ahead reminders are planned (2 to 168).
+# horizon_hours = 24
+# Events looked at per plan, newest first (1 to 100000), and reminders per
+# event and plan, repeats included (1 to 1000).
+# max_events = 2000
+# max_per_event = 64
+# Repeats of one alarm (REPEAT/DURATION of a VALARM), 0 to 100; 0: each
+# alarm rings once. Never more often than once a minute.
+# max_repeats = 10
+
+# Login sessions. Access tokens are short; refresh tokens rotate on every
+# use and never outlive the session.
+[session]
+access_token_minutes = 15
+refresh_token_days = 30
+# Log in again after this, whatever happens.
+max_days = 30
+
+# JMAP limits announced in the session (urn:ietf:params:jmap:core).
+[limits]
+max_size_upload = 50000000
+max_concurrent_upload = 4
+max_size_request = 10000000
+max_concurrent_requests = 4
+max_calls_in_request = 32
+max_objects_in_get = 500
+max_objects_in_set = 500
+# Open push (EventSource) connections per account.
+event_streams_per_account = 8
+
+# Failed logins allowed per login name and per IP (IPv6: per /64) in the
+# window. A failed login is also an attempt against the mail server.
+[login_limits]
+per_login = 5
+per_ip = 20
+window_minutes = 15
+
+# Undo send and scheduled send (RFC 4865 FUTURERELEASE). The bridge keeps
+# each held message in its database, sealed with the user's key, and sends
+# it when it is due. It needs the user's login to send it: if no session of
+# theirs is signed in at that time, the message waits (and goes out at their
+# next sign-in) for wait_hours, then it is shown as not delivered.
+[submission]
+# How far ahead a message can be scheduled, in days (0 to 30). 0 turns off
+# undo send and scheduled send (FUTURERELEASE is not announced).
+hold_days = 7
+# Most messages waiting per user, and their total size in MiB.
+max_held = 100
+max_held_mb = 200
+# How long a due message may wait for its user to sign in (or for the SMTP
+# server) before it fails, in hours (1 to 720).
+wait_hours = 72
+# Let users choose to send scheduled messages even after they sign out.
+# The bridge then keeps their password (sealed with the master key, as
+# during a session) until those messages are sent, canceled, or wait_hours
+# past their time. A session revoked as stolen deletes it at once.
+send_while_signed_out = false
+
+# Web Push (optional): notifications of new mail and calendar reminders
+# with every tab of the web app closed, as Stalwart does (JMAP
+# PushSubscription, RFC 8620 §7.2). Without this section the session has no
+# urn:ietf:params:jmap:webpush-vapid and the web app only notifies while it
+# is open. The bridge generates its VAPID key the first time and keeps it in
+# the database, sealed under the master key; `nebula-bridge
+# rotate-vapid-key` replaces it (docs/bridge.md).
+# [push]
+# Who push services can contact about this server (the VAPID `sub`):
+# mailto: or https:. Required.
+# contact = "mailto:postmaster@example.com"
+# Push URLs the bridge POSTs to are user input: by default only the
+# browsers' push services (fcm.googleapis.com, *.push.services.mozilla.com,
+# *.push.apple.com, *.notify.windows.com), https on 443 to public
+# addresses. List other hosts ("*.example.com" for subdomains), or ["*"]
+# for any public host.
+# allowed_hosts = ["fcm.googleapis.com", "*.push.services.mozilla.com"]
+# Subscriptions per login session, 1 to 100 (the web app makes one per
+# device).
+# max_subscriptions = 10
+# Calendar reminders by Web Push too; false: only to an open app.
+# calendar_alerts = true

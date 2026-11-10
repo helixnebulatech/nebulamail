@@ -1,0 +1,5 @@
+{
+  "title": "javascript:, data:, vbscript: and relative links",
+  "attacks": ["javascript-url", "mixed-case-scheme", "tab-in-scheme", "newline-in-scheme", "entity-encoded-scheme", "leading-control-char", "data-text-html", "vbscript", "relative-href", "protocol-relative-href", "file-url", "blob-url", "target-blank", "ping", "mailto-attach"],
+  "expect": { "visibleText": ["Links", "l1", "l14", "Section 2"] }
+}

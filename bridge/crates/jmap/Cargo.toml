@@ -1,0 +1,64 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[package]
+name = "nebula-jmap"
+description = "JMAP methods on top of the IMAP mailbox and SMTP"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+nebula-http.workspace = true
+nebula-jmap-proto.workspace = true
+nebula-mail.workspace = true
+# Only to read the IMAP response code of a refused login.
+nebula-imap.workspace = true
+nebula-groupware.workspace = true
+nebula-dav.workspace = true
+nebula-crypto.workspace = true
+nebula-smtp.workspace = true
+nebula-store.workspace = true
+nebula-webpush.workspace = true
+nebula-managesieve.workspace = true
+serde.workspace = true
+sha2.workspace = true
+base64.workspace = true
+zeroize.workspace = true
+net-guard.workspace = true
+mail-parser.workspace = true
+mail-builder.workspace = true
+bytes.workspace = true
+futures.workspace = true
+secrecy.workspace = true
+getrandom.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+time.workspace = true
+tokio = { workspace = true, features = ["sync", "time", "rt", "macros"] }
+tokio-util.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+nebula-tests.workspace = true
+# tests/calendars.rs: another DAV client, and Stalwart's own JMAP to
+# compare with (the differential test).
+nebula-dav.workspace = true
+hyper = { workspace = true, features = ["client", "http1", "server"] }
+hyper-util = { workspace = true, features = ["tokio", "service"] }
+nebula-webpush.workspace = true
+bytes.workspace = true
+net-guard.workspace = true
+http.workspace = true
+http-body-util.workspace = true
+base64.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "sync", "time", "net", "test-util"] }
+tempfile.workspace = true
+url.workspace = true
+proptest.workspace = true
+
+[lints]
+workspace = true

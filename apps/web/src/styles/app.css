@@ -1,0 +1,143 @@
+/* SPDX-FileCopyrightText: 2026 Nebula Mail contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only */
+
+/* Minimal reset. Everything else is StyleX; its CSS is appended to this file
+   in production builds and served from /virtual:stylex.css in dev. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Scrollbars: thin, rounded, in the theme's colours (--nb-scrollbar-* come
+   from themeProps: a light tint of the text colour). A 4px thumb that
+   only gets a little darker while the pointer is over the scrolling area,
+   and firmer while it's being dragged; it never grows.
+   Chromium and Safari get the -webkit- pseudo-elements, which allow the
+   full look. Chromium ignores them as soon as scrollbar-width or
+   scrollbar-color are set (and on Windows draws its own bar with arrows),
+   so the standard properties are only for browsers without the
+   pseudo-elements (Firefox). */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--nb-scrollbar-thumb) padding-box;
+}
+
+:hover::-webkit-scrollbar-thumb {
+  background-color: var(--nb-scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--nb-scrollbar-thumb-active);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--nb-scrollbar-thumb) transparent;
+  }
+
+  *:hover {
+    scrollbar-color: var(--nb-scrollbar-thumb-hover) transparent;
+  }
+}
+
+/* Page transitions (View Transitions API, router.tsx): only when the app
+   section changes. A plain cross-fade, both screens at once, with no
+   movement, always over the app background. Browsers without the API, and
+   reduced motion, just switch. */
+html:active-view-transition-type(nb-section) {
+  &::view-transition-old(root) {
+    animation: nb-section-out 200ms ease both;
+  }
+
+  &::view-transition-new(root) {
+    animation: nb-section-in 200ms ease both;
+  }
+}
+
+@keyframes nb-section-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes nb-section-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* Printing the app page itself. Ctrl/⌘+P with an email open
+   goes to the print frame (use-reader-actions.ts); this is for the
+   browser's menu, or the shortcut pressed inside the email's frame (its
+   keys never reach the app). Only the open conversation is printed: every
+   element that neither holds it nor is in it goes, its ancestors stop
+   scrolling and clipping, and its buttons go too. The email body is a
+   sandboxed iframe as tall as its content, so it prints with the rest. */
+@media print {
+  html:has([data-print-email]) {
+    &
+      body
+      *:not(:has([data-print-email])):not(
+        [data-print-email],
+        [data-print-email] *
+      ),
+    & [data-print-email] :is(button, [role="toolbar"], [data-print-hide]) {
+      display: none !important;
+    }
+
+    &,
+    & body,
+    & :has([data-print-email]),
+    & [data-print-email] {
+      position: static !important;
+      display: block !important;
+      overflow: visible !important;
+      width: auto !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      transform: none !important;
+      contain: none !important;
+    }
+  }
+}

@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[package]
+name = "nebula-mail"
+description = "Mailbox model over IMAP: sync, ids, threads and operations"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+nebula-store.workspace = true
+nebula-imap.workspace = true
+nebula-jmap-proto.workspace = true
+net-guard.workspace = true
+mail-parser.workspace = true
+encodify.workspace = true
+icu_normalizer.workspace = true
+quick_cache.workspace = true
+rustls-pki-types.workspace = true
+secrecy.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["sync", "time", "rt", "macros", "net"] }
+tracing.workspace = true
+
+[dev-dependencies]
+nebula-tests.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "sync", "time", "net", "test-util"] }
+tempfile.workspace = true
+proptest.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

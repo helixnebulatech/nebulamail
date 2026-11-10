@@ -1,0 +1,13 @@
+BEGIN:VCARD
+VERSION:3.0
+N:García;Lucía;;;
+FN:Lucía García
+ORG:Helix Nebula
+TITLE:Ingeniera
+EMAIL;TYPE=INTERNET,WORK:lucia@example.com
+TEL;TYPE=CELL:+34 600 000 000
+ADR;TYPE=HOME:;;Calle Mayor 1;Madrid;;28013;España
+BDAY:1990-05-17
+NOTE:Contacto de prueba\, con coma
+CATEGORIES:Trabajo,Amigos
+END:VCARD

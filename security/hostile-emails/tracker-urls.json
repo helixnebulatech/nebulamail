@@ -1,0 +1,9 @@
+{
+  "title": "Known tracker URLs from the MailTrackerBlocker list (img, srcset, CSS)",
+  "attacks": ["mailtrackerblocker-list", "tracker-in-srcset", "tracker-in-css"],
+  "expect": {
+    "visibleText": ["Known trackers", "css trackers"],
+    "trackerServicesInclude": ["GitHub", "Intuit", "HubSpot", "MailTrack", "Google", "WordPress", "Substack", "Litmus", "Email on Acid"],
+    "remoteImagesExactly": ["https://cdn.example/legit-logo.png"]
+  }
+}

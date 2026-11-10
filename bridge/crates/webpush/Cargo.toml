@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[package]
+name = "nebula-webpush"
+description = "Web Push sender: RFC 8291 encryption, VAPID (RFC 8292), guarded POSTs to push services"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+net-guard.workspace = true
+nebula-tls.workspace = true
+aws-lc-rs.workspace = true
+base64.workspace = true
+url.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+time.workspace = true
+tokio = { workspace = true, features = ["net", "time", "rt"] }
+hyper = { workspace = true, features = ["client", "http1"] }
+hyper-util = { workspace = true, features = ["tokio"] }
+http-body-util.workspace = true
+http.workspace = true
+bytes.workspace = true
+rustls-pki-types.workspace = true
+zeroize.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "net", "io-util", "time"] }
+hyper = { workspace = true, features = ["client", "http1", "server"] }
+hyper-util = { workspace = true, features = ["tokio", "service"] }
+http-body-util.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,5 @@
+{
+  "title": "iframe, object, embed, applet, frames, portal",
+  "attacks": ["iframe", "iframe-srcdoc", "iframe-data-url", "object", "embed", "applet", "frameset", "portal", "fencedframe"],
+  "expect": { "visibleText": ["Nested contexts"] }
+}

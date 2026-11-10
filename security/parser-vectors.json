@@ -1,0 +1,49 @@
+{
+  "$comment": "Hostile HTML for the server-side parser. Each vector is `unit` repeated `repeat` times, then `suffix`. parse5 (inside jsdom) is quadratic on some of them with a nearly empty stack of open elements; others build a tree deeper than the stack. Used by packages/mail-render (server-extract) and packages/image-proxy (preload): the parse must fail closed (no image) within a fixed deadline. Generated, so the files stay small; never format the units.",
+  "version": 1,
+  "suffix": "<img src=\"https://images.example.com/after.png\">",
+  "vectors": [
+    {
+      "id": "table-a",
+      "unit": "<table><a>x",
+      "repeat": 160000,
+      "why": "foster parenting + formatting reconstruction: 1.76 MB, about 60 s in parse5 alone, stack of 4"
+    },
+    {
+      "id": "table-nobr",
+      "unit": "<table><nobr>x",
+      "repeat": 20000,
+      "why": "same with <nobr>: 280 KB, about 2.6 s"
+    },
+    {
+      "id": "table-a-closed",
+      "unit": "<table><a>x</a></table>",
+      "repeat": 80000,
+      "why": "balanced tags, so no string estimate flags it: 1.84 MB, several seconds"
+    },
+    {
+      "id": "table-nobr-closed",
+      "unit": "<table><nobr>x</nobr></table>",
+      "repeat": 60000,
+      "why": "balanced tags with <nobr>: 1.74 MB"
+    },
+    {
+      "id": "div-stray-close",
+      "unit": "<div></x>",
+      "repeat": 20000,
+      "why": "a stray end tag must not count as closing: real depth 20000"
+    },
+    {
+      "id": "span-div",
+      "unit": "<span><div></span>",
+      "repeat": 5000,
+      "why": "</span> is ignored with a <div> on top: real depth 10000"
+    },
+    {
+      "id": "dom-deeper-than-stack",
+      "unit": "<a><b></table>x<nobr><div><table>",
+      "repeat": 400,
+      "why": "the tree ends about twice as deep as the stack of open elements"
+    }
+  ]
+}

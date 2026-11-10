@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Fuzz targets for `cargo fuzz` (nightly, CI only).
+# Run from this directory: `cargo +nightly fuzz run multistatus`.
+
+[package]
+name = "nebula-dav-proto-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+url = "2.5.8"
+nebula-dav-proto = { path = ".." }
+
+# Standalone: not a member of the bridge workspace (needs nightly).
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "multistatus"
+path = "fuzz_targets/multistatus.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "href"
+path = "fuzz_targets/href.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "values"
+path = "fuzz_targets/values.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "schedule"
+path = "fuzz_targets/schedule.rs"
+test = false
+doc = false
+bench = false

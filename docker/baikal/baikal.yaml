@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Baïkal 0.10.1 (sabre/dav 4) for the bridge's sharing tests
+# CalendarServer sharing of calendars. Basic auth (the bridge
+# sends Basic only), SQLite written by init-db.sh, an admin hash nobody
+# knows the password of (Baïkal refuses to start without one) and no iMIP
+# (empty invite_from: no mail is ever sent).
+system:
+  configured_version: "0.10.1"
+  timezone: "UTC"
+  card_enabled: true
+  cal_enabled: true
+  invite_from: ""
+  dav_auth_type: "Basic"
+  admin_passwordhash: "00000000000000000000000000000000"
+  failed_access_message: "user %u authentication failure for Baikal"
+  auth_realm: BaikalDAV
+  base_uri: ""
+database:
+  encryption_key: "nebula-test-only"
+  backend: "sqlite"
+  sqlite_file: "/var/www/baikal/Specific/db/db.sqlite"
+  mysql_host: ""
+  mysql_dbname: ""
+  mysql_username: ""
+  mysql_password: ""
+  pgsql_host: ""
+  pgsql_dbname: ""
+  pgsql_username: ""
+  pgsql_password: ""

@@ -1,0 +1,541 @@
+# SPDX-FileCopyrightText: 2026 Nebula Mail contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# KEEP IN SYNC with scripts/ci-local.sh, which runs these same jobs locally
+# (GitHub Actions is not available): a change to a job, step, command or env
+# var here must change the script too, in the same commit.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web (TypeScript)
+    runs-on: ubuntu-latest
+    # Placeholder config so the app builds; none of these are real secrets.
+    # Real values are read at runtime on each deployment (@dynamic).
+    env:
+      APP_URL: https://mail.example.com
+      JMAP_SERVER: https://jmap.example.com
+      OAUTH_CLIENT_ID: ci
+      OAUTH_CLIENT_SECRET: ci-placeholder-not-a-secret
+      SESSION_KEYS: "1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      # GHSA-gcqx-w48m-w2h4 (low): deepmerge <= 4.3.1, no fixed version yet.
+      # Only ultracite's CLI uses it, to merge its own config files; it never
+      # reaches the app or untrusted input. Remove when fixed.
+      - run: bun audit --ignore=GHSA-gcqx-w48m-w2h4
+      # First: the build generates routeTree.gen.ts, which type-aware lint needs.
+      - run: bun run build
+      # The zip that Stalwart serves (docs/static.md). The build
+      # fails by itself if anything of our server is left in the client code
+      # or index.html has no CSP. Built twice with the same nonce it must give
+      # the same zip, so anyone can check a published SHA-256 by rebuilding.
+      - name: Static build, reproducible
+        working-directory: apps/web
+        env:
+          NEBULA_STYLE_NONCE: ci-reproducible-build
+        run: |
+          bun run build:static
+          cp dist-static/nebula-mail-static.zip.sha256 "$RUNNER_TEMP/first.sha256"
+          bun run build:static
+          diff "$RUNNER_TEMP/first.sha256" dist-static/nebula-mail-static.zip.sha256
+      - run: bun run check # Ultracite: oxlint + oxfmt
+      - run: bun run check-types
+      - run: bun run test
+      - name: Tracker list is up to date
+        run: bun run generate:trackers --check
+        working-directory: packages/mail-render
+
+  # net-guard and the image proxy pinned on every runtime.
+  # Under Bun, net-guard picks its own adapter (Bun.fetch to the validated
+  # IP); under Deno, the Node adapter with the real undici. EXPECT_RUNTIME
+  # makes a test fail if the suite did not really run in that runtime. The
+  # Bun tests make a throw-away CA with openssl.
+  runtimes:
+    name: net-guard and image proxy on Bun and Deno
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: 2.9.8
+      - run: bun install --frozen-lockfile
+      - name: net-guard on Bun
+        run: bun run test:bun
+        working-directory: packages/net-guard
+      - name: image proxy on Bun
+        run: bun run test:bun
+        working-directory: packages/image-proxy
+      - name: net-guard on Deno
+        run: bun run test:deno
+        working-directory: packages/net-guard
+      - name: image proxy on Deno (and scripts/start-deno.sh)
+        run: bun run test:deno
+        working-directory: packages/image-proxy
+
+  hostile-emails:
+    name: Hostile emails (Chromium + Firefox)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      # Ubuntu 24.04 blocks unprivileged user namespaces with AppArmor,
+      # and Chromium's sandbox needs them: allow them, never turn the
+      # sandbox off.
+      - name: Allow Chromium's sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: bunx playwright install --with-deps chromium firefox
+        working-directory: packages/mail-render
+      # 0 requests with images off, only the proxy with images on.
+      - run: bun run test:browser
+        working-directory: packages/mail-render
+
+  web-browser:
+    name: Mail UI on phone, tablet and desktop + PWA (Chromium; printing also Firefox and WebKit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      # Ubuntu 24.04 blocks unprivileged user namespaces with AppArmor,
+      # and Chromium's sandbox needs them: allow them, never turn the
+      # sandbox off.
+      - name: Allow Chromium's sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: bunx playwright install --with-deps chromium firefox webkit
+        working-directory: apps/web
+      # production build, fake session and fake JMAP.
+      - run: bun run test:browser
+        working-directory: apps/web
+
+  # docs/static.md «Test it»: the zip installed in a throwaway
+  # Stalwart as the guide says, then in Chromium: its headers and CSP, the
+  # OAuth login with PKCE, the inbox, a message and logout, with every
+  # request of the browser (workers too) through a proxy that only reaches
+  # Stalwart. Nothing of ours runs besides the zip.
+  static-stalwart:
+    name: Static zip served by Stalwart (Chromium)
+    runs-on: ubuntu-latest
+    # The build needs the app's config to exist; none of it ends in the zip.
+    env:
+      APP_URL: https://mail.example.com
+      JMAP_SERVER: https://jmap.example.com
+      OAUTH_CLIENT_ID: ci
+      OAUTH_CLIENT_SECRET: ci-placeholder-not-a-secret
+      SESSION_KEYS: "1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run build:static
+        working-directory: apps/web
+      # Its own compose project, port 8095 and anonymous volumes; the zip
+      # is mounted read-only (docker/compose.yaml, `stalwart-static`).
+      - name: Start the throwaway Stalwart
+        run: |
+          admin="admin:$(openssl rand -hex 16)"
+          echo "::add-mask::$admin"
+          echo "STALWART_STATIC_RECOVERY_ADMIN=$admin" >> "$GITHUB_ENV"
+          STALWART_STATIC_RECOVERY_ADMIN="$admin" docker compose -p nebula-static-test \
+            -f docker/compose.yaml --profile static up -d --wait --no-deps stalwart-static
+      # Ubuntu 24.04 blocks unprivileged user namespaces with AppArmor,
+      # and Chromium's sandbox needs them: allow them, never turn the
+      # sandbox off.
+      - name: Allow Chromium's sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: bunx playwright install --with-deps chromium
+        working-directory: apps/web
+      - run: bun run test:static
+        working-directory: apps/web
+      - name: Server logs
+        if: failure()
+        run: docker compose -p nebula-static-test -f docker/compose.yaml --profile static logs --tail 200 stalwart-static
+      - name: Remove the throwaway Stalwart
+        if: always()
+        run: docker compose -p nebula-static-test -f docker/compose.yaml --profile static rm -sfv stalwart-static
+
+  rust:
+    name: Bridge (Rust)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bridge
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: bridge
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --locked -- -D warnings
+      - run: cargo test --locked
+
+  # the parsers of untrusted input under cargo-fuzz. Nightly
+  # only here (the code itself builds on the pinned stable toolchain); each
+  # target runs for 60 s, and a crash fails the job and uploads its input.
+  fuzz:
+    name: Bridge fuzzing (nightly, 60 s per target)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { crate: imap-proto, target: decode }
+          - { crate: imap-proto, target: utf7 }
+          - { crate: jmap-proto, target: request }
+          - { crate: jmap-proto, target: strict_json }
+          - { crate: jmap-proto, target: calendar_contacts }
+          - { crate: http, target: form }
+          - { crate: http, target: basic_auth }
+          - { crate: http, target: fields }
+          - { crate: groupware, target: icalendar }
+          - { crate: groupware, target: vcard }
+          - { crate: groupware, target: json }
+          - { crate: groupware, target: defaults }
+          - { crate: groupware, target: counter }
+          - { crate: dav-proto, target: multistatus }
+          - { crate: dav-proto, target: href }
+          - { crate: dav-proto, target: values }
+          - { crate: dav-proto, target: schedule }
+          - { crate: managesieve-proto, target: response }
+          - { crate: managesieve-proto, target: command }
+    defaults:
+      run:
+        working-directory: bridge/crates/${{ matrix.crate }}/fuzz
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Nightly toolchain and cargo-fuzz
+        run: |
+          rustup toolchain install nightly --profile minimal
+          cargo +nightly install cargo-fuzz --locked
+      - name: Run ${{ matrix.crate }}/${{ matrix.target }}
+        run: cargo +nightly fuzz run ${{ matrix.target }} -- -max_total_time=60 -rss_limit_mb=2048
+      - name: Keep the crashing input
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fuzz-${{ matrix.crate }}-${{ matrix.target }}
+          path: bridge/crates/${{ matrix.crate }}/fuzz/artifacts
+
+  bridge-servers:
+    name: Bridge against Stalwart and Dovecot (+ web app)
+    runs-on: ubuntu-latest
+    steps:
+      # The Rust build, Stalwart, Dovecot, Postfix, Radicale, Baïkal and
+      # Nextcloud (its image alone is ~1 GB unpacked) don't fit in the
+      # runner's free disk: drop preinstalled toolchains this job never uses.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/share/swift
+          df -h /
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: bridge
+      - run: bun install --frozen-lockfile
+      # docker/README.md: Stalwart with the test accounts, then Dovecot, which
+      # relays sent mail to Stalwart as alice (her password is in docker/.env).
+      - name: Start Stalwart
+        run: |
+          printf 'STALWART_RECOVERY_ADMIN=admin:%s\n' "$(openssl rand -hex 16)" > docker/.env
+          docker compose -f docker/compose.yaml up -d --wait stalwart
+          bun run dev:setup
+          # Shared folders and alice's disk quota (the Quota tests need one).
+          bun run dev:share
+      # Calendar invitations to one occurrence, sharing a calendar and its
+      # zone and default alerts, end to end.
+      - name: Calendar integration tests (Stalwart)
+        working-directory: apps/web
+        run: |
+          set -a; . ../../docker/.env; set +a
+          CAL_LIVE_URL=http://localhost:8080 \
+          CAL_LIVE_USER=alice@nebulamail.test CAL_LIVE_PASSWORD="$TEST_ALICE_PASSWORD" \
+          CAL_LIVE_ORGANIZER=bob@nebulamail.test CAL_LIVE_ORGANIZER_PASSWORD="$TEST_BOB_PASSWORD" \
+          CAL_LIVE_DELEGATE=carol@nebulamail.test CAL_LIVE_DELEGATE_PASSWORD="$TEST_CAROL_PASSWORD" \
+          bunx vitest run src/calendar/occurrence.live.test.ts src/calendar/sharing.live.test.ts src/calendar/defaults.live.test.ts
+      - name: Start Dovecot
+        run: |
+          docker compose -f docker/compose.yaml --profile bridge up -d dovecot
+          # The image has no health check: wait for the IMAPS greeting.
+          for _ in $(seq 30); do
+            echo | timeout 2 openssl s_client -quiet -connect 127.0.0.1:2993 2>/dev/null | grep -q 'OK' && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: Integration tests (Stalwart)
+        working-directory: bridge
+        env:
+          NEBULA_TEST_IMAP: "1"
+          NEBULA_TEST_SMTP: "1"
+          NEBULA_TEST_SERVER: stalwart
+        # One test at a time: the tests share alice's account, and Stalwart
+        # indexes for search in a background queue that falls behind (more
+        # than 30 s, seen locally on a fresh server) when several tests
+        # write to the same account at once.
+        run: cargo test --locked --test server -- --test-threads=1
+      # The live tests of `mail` are unit tests (they use the crate's
+      # insides): `--test server` doesn't run them. Nothing is sent.
+      - name: Mail live tests (Stalwart)
+        working-directory: bridge
+        env:
+          NEBULA_TEST_IMAP: "1"
+          NEBULA_TEST_SERVER: stalwart
+        run: cargo test --locked -p nebula-mail --lib live_tests -- --test-threads=1
+      - name: Integration tests (Dovecot)
+        working-directory: bridge
+        env:
+          NEBULA_TEST_IMAP: "1"
+          NEBULA_TEST_SMTP: "1"
+          NEBULA_TEST_SERVER: dovecot
+        # One test at a time, as above (they share alice's account).
+        run: cargo test --locked --test server -- --test-threads=1
+      - name: Mail live tests (Dovecot)
+        working-directory: bridge
+        env:
+          NEBULA_TEST_IMAP: "1"
+          NEBULA_TEST_SERVER: dovecot
+        run: cargo test --locked -p nebula-mail --lib live_tests -- --test-threads=1
+      # Sieve scripts and the vacation response over ManageSieve
+      # the client and the JMAP methods against Stalwart's 4190 and
+      # Dovecot's Pigeonhole (published on 24190). Nothing is sent.
+      - name: Sieve tests (Stalwart and Dovecot)
+        working-directory: bridge
+        env:
+          NEBULA_TEST_SIEVE: "1"
+        run: |
+          for server in stalwart dovecot; do
+            NEBULA_TEST_SERVER=$server cargo test --locked -p nebula-managesieve --test server -- --test-threads=1
+            NEBULA_TEST_SERVER=$server cargo test --locked -p nebula-jmap --test sieve -- --test-threads=1
+          done
+      # CalDAV/CardDAV: Stalwart's own DAV, then Radicale
+      # (no JMAP, no scheduling). Discovery, collections, put/get/sync/
+      # delete in scratch collections that the tests delete again; then the
+      # groupware sync sees what another client wrote there (state, push);
+      # then JMAP Contacts and Calendars through the whole bridge (IMAP of the
+      # same server, Dovecot's for Radicale) with the web's requests,
+      # calendar writes and invitations included (Stalwart sends two).
+      - name: DAV integration tests (Stalwart)
+        working-directory: bridge
+        env:
+          NEBULA_TEST_DAV: "1"
+          NEBULA_TEST_SERVER: stalwart
+        run: |
+          cargo test --locked -p nebula-dav -p nebula-groupware -p nebula-jmap --test server -- --test-threads=1
+          # JMAP Calendars through the bridge, and the differential test
+          # against Stalwart's own JMAP with the same .ics.
+          cargo test --locked -p nebula-jmap --test calendars -- --test-threads=1
+          # Calendar alerts on the bridge's real event source.
+          cargo test --locked -p nebula-jmap --test alerts
+      - name: Start Radicale
+        run: |
+          docker compose -f docker/compose.yaml --profile bridge up -d --build radicale
+          # The image has no health check: wait for an answer on 5232.
+          for _ in $(seq 30); do
+            curl -s -o /dev/null http://127.0.0.1:5232/ && exit 0
+            sleep 1
+          done
+          exit 1
+      # Postfix announces DSN (Stalwart and Dovecot don't): the bridge's own
+      # ENVID and real bounces matched by it. Only the crates that send.
+      # Started before the Radicale tests: there the bridge mails the
+      # invitations itself (no scheduling in Radicale) through Postfix,
+      # which delivers to Dovecot.
+      - name: Start Postfix
+        run: |
+          docker compose -f docker/compose.yaml --profile bridge up -d --build postfix
+          for _ in $(seq 30); do
+            echo | timeout 2 openssl s_client -quiet -connect 127.0.0.1:2466 2>/dev/null | grep -q '^220' && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: DAV integration tests (Radicale)
+        working-directory: bridge
+        env:
+          NEBULA_TEST_DAV: "1"
+          NEBULA_TEST_SERVER: radicale
+        run: |
+          cargo test --locked -p nebula-dav -p nebula-groupware -p nebula-jmap --test server -- --test-threads=1
+          cargo test --locked -p nebula-jmap --test calendars -- --test-threads=1
+          cargo test --locked -p nebula-jmap --test alerts
+      # Baïkal: Calendar Server sharing.
+      - name: Start Baikal
+        run: |
+          docker compose -f docker/compose.yaml --profile bridge up -d --build baikal
+          for _ in $(seq 30); do
+            curl -s -o /dev/null http://127.0.0.1:5233/dav.php/ && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: DAV sharing tests (Baikal)
+        working-directory: bridge
+        env:
+          NEBULA_TEST_BAIKAL: "1"
+        run: cargo test --locked -p nebula-jmap --test server sharing -- --test-threads=1
+      # Nextcloud 34 on PostgreSQL: its own
+      # `oc:share`, publishing, subscriptions and trash bin. Big image and
+      # about a minute to install the first time: wait up to 5 min.
+      - name: Start Nextcloud
+        run: |
+          docker compose -f docker/compose.yaml --profile bridge up -d --build nextcloud
+          for _ in $(seq 300); do
+            curl -sf http://127.0.0.1:5234/status.php | grep -q '"installed":true' && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: DAV integration tests (Nextcloud)
+        working-directory: bridge
+        env:
+          NEBULA_TEST_DAV: "1"
+          NEBULA_TEST_SERVER: nextcloud
+        run: cargo test --locked -p nebula-dav -p nebula-groupware -p nebula-jmap --test server -- --test-threads=1
+      - name: Stop Nextcloud
+        run: docker compose -f docker/compose.yaml --profile bridge stop nextcloud nextcloud-db
+      # Calendars on Radicale and contacts on Baïkal (`contacts_url`, as
+      # Fastmail).
+      - name: Split DAV test (Radicale + Baikal)
+        working-directory: bridge
+        env:
+          NEBULA_TEST_SPLIT_DAV: "1"
+        run: cargo test --locked -p nebula-jmap --test server split_dav -- --test-threads=1
+      - name: Integration tests (Postfix)
+        working-directory: bridge
+        env:
+          NEBULA_TEST_IMAP: "1"
+          NEBULA_TEST_SMTP: "1"
+          NEBULA_TEST_SERVER: postfix
+        run: cargo test --locked -p nebula-smtp -p nebula-jmap --test server -- --test-threads=1
+      # A Sieve rule stored through the bridge files a message that Postfix
+      # delivers into Dovecot.
+      - name: Sieve on delivered mail (Postfix + Dovecot)
+        working-directory: bridge
+        env:
+          NEBULA_TEST_SIEVE: "1"
+          NEBULA_TEST_SERVER: postfix
+        run: cargo test --locked -p nebula-jmap --test sieve -- --test-threads=1
+      # Folders under `INBOX.`, `.` between levels, with a Dovecot and a
+      # Postfix of their own.
+      - name: Start Dovecot with INBOX. folders
+        run: |
+          docker compose -f docker/compose.yaml --profile bridge-prefix up -d --build --no-deps dovecot-prefix postfix-prefix
+          for _ in $(seq 30); do
+            echo | timeout 2 openssl s_client -quiet -connect 127.0.0.1:2467 2>/dev/null | grep -q '^220' && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: Sieve with INBOX. folders
+        working-directory: bridge
+        env:
+          NEBULA_TEST_SIEVE: "1"
+          NEBULA_TEST_SERVER: dovecot-prefix
+        run: cargo test --locked -p nebula-jmap --test sieve -- --test-threads=1
+      # The app (production build) against the bridge and Dovecot: real
+      # sign-in on the bridge's page, sending, Sent, and the synced
+      # preferences in the «Nebula Mail» folder; calendars
+      # and contacts from Radicale, started above.
+      - run: cargo build --locked -p nebula-bridge
+        working-directory: bridge
+      # Ubuntu 24.04 blocks unprivileged user namespaces with AppArmor,
+      # and Chromium's sandbox needs them: allow them, never turn the
+      # sandbox off.
+      - name: Allow Chromium's sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: bunx playwright install --with-deps chromium
+        working-directory: apps/web
+      # The app against Stalwart itself (its OAuth page, port 3001 of
+      # dev:setup): delivery status and read receipts.
+      - name: Delivery status and receipts in the browser (Stalwart)
+        working-directory: apps/web
+        run: |
+          set -a; . ../../docker/.env; set +a
+          MAIL_LIVE_URL=http://localhost:8080 \
+          MAIL_LIVE_ALICE_PASSWORD="$TEST_ALICE_PASSWORD" \
+          MAIL_LIVE_BOB_PASSWORD="$TEST_BOB_PASSWORD" \
+          bun run test:live
+      # Mail, synced preferences, contacts and calendar (views, editing,
+      # series, reminders) through the bridge with Dovecot and Radicale. The
+      # tests tagged @postfix skip themselves here (nothing to Stalwart).
+      - name: The app through the bridge (Dovecot + Radicale)
+        working-directory: apps/web
+        run: bun run test:bridge
+      # Sending with Postfix, so that bounces, receipts and calendar
+      # invitations come back to Dovecot: e2e-bridge/receipts.e2e.ts and
+      # alice inviting bob in calendar.e2e.ts (the bridge mails it, as
+      # Radicale doesn't schedule).
+      - name: Receipts and invitations in the browser (bridge + Postfix)
+        working-directory: apps/web
+        env:
+          E2E_BRIDGE_SMTP: postfix
+        run: bun run test:bridge -- --grep @postfix
+      - name: Server logs
+        if: failure()
+        run: docker compose -f docker/compose.yaml --profile bridge logs --tail 200
+
+  cargo-deny:
+    name: Rust dependencies (licenses, advisories)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          manifest-path: bridge/Cargo.toml
+      # Cargo has no minimumReleaseAge: check that every crate is 2+ days old.
+      - name: Crates published at least 2 days ago
+        working-directory: bridge
+        run: python3 scripts/check-release-age.py
+
+  reuse:
+    name: License headers (REUSE)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 # v6.0.0
